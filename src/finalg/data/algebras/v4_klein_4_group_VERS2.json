@@ -1,0 +1,8 @@
+{"name": "V4",
+ "description": "Klein-4 group, Version 2",
+ "elements": ["e", "h", "v", "r"],
+ "table": [["e", "h", "v", "r"],
+           ["h", "e", "r", "v"],
+           ["v", "r", "e", "h"],
+           ["r", "v", "h", "e"]]
+}

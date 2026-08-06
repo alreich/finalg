@@ -1,0 +1,39 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "finalg"
+version = "0.1.0"
+description = "Finite abstract algebras in Python: Group, Ring, Field, VectorSpace, Module, Monoid, Semigroup, Quasigroup, Loop, and Magma, implemented via Cayley tables."
+readme = "README.md"
+license = { text = "MIT" }
+authors = [{ name = "Alfred J. Reich", email = "al.reich@gmail.com" }]
+requires-python = ">=3.10"
+dependencies = [
+    "numpy",
+    "scipy",
+    "sympy",
+    "networkx",
+    "matplotlib",
+]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Topic :: Scientific/Engineering :: Mathematics",
+]
+
+[project.urls]
+Homepage = "https://github.com/alreich/finalg"
+Documentation = "https://finalg.readthedocs.io"
+
+[project.optional-dependencies]
+docs = ["sphinx", "sphinx_rtd_theme", "readthedocs-sphinx-search"]
+test = ["pytest"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+"finalg.data.algebras" = ["*.json"]

@@ -1,0 +1,7 @@
+{"name": "RPS",
+ "description": "Rock, Paper, Scissors Magma",
+ "elements": ["r", "p", "s"],
+ "table": [["r", "p", "r"],
+           ["p", "p", "s"],
+           ["r", "s", "s"]]
+}

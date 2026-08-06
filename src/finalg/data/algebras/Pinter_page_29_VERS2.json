@@ -1,0 +1,11 @@
+{"name": "Pinter29 VERSION 2",
+ "description": "For testing input of table of element name strings",
+ "elements": ["I", "A", "B", "C", "D", "K"],
+ "table": [["I", "A", "B", "C", "D", "K"],
+           ["A", "I", "C", "B", "K", "D"],
+           ["B", "K", "D", "A", "I", "C"],
+           ["C", "D", "K", "I", "A", "B"],
+           ["D", "C", "I", "K", "B", "A"],
+           ["K", "B", "A", "D", "C", "I"]]
+}
+

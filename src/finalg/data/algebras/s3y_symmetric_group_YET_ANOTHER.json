@@ -1,0 +1,10 @@
+{"name": "S3Y",
+ "description": "Yet another version of the symmetric group on 3 letters",
+ "elements": ["epsilon", "gamma", "alpha", "kappa", "delta", "beta"],
+ "table": [[0, 1, 2, 3, 4, 5],
+           [1, 0, 4, 5, 2, 3],
+           [2, 5, 0, 4, 3, 1],
+           [3, 4, 5, 0, 1, 2],
+           [4, 3, 1, 2, 5, 0],
+           [5, 2, 3, 1, 0, 4]]
+}

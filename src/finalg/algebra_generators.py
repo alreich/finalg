@@ -5,7 +5,7 @@
 import itertools as it
 import numpy as np
 from sympy.ntheory import isprime
-# from sympy.combinatorics.permutations import Permutation
+# from collections.abc import Callable
 
 from finalg.abstract_matrix import AbstractMatrix
 from finalg.permutation import Perm
@@ -13,8 +13,10 @@ from finalg.make_finite_algebra import make_finite_algebra
 from finalg.cayley_table import index_table_from_name_table
 from finalg.utilities import powerset, compress_runs
 from finalg.my_math import relative_primes
+from finalg.ring import Ring
 
-def generate_cyclic_group(order, elem_name='', name=None, description=None, zfill=False):
+def generate_cyclic_group(order: int, elem_name: str = '', name: str = None,
+                          description: str = None, zfill: bool = False):
     """Generates a cyclic group with the given order. If zfill is True, then left fill element
     names with zeros."""
     if name:
@@ -34,8 +36,8 @@ def generate_cyclic_group(order, elem_name='', name=None, description=None, zfil
     return make_finite_algebra(nm, desc, elements, table)
 
 
-def generate_symmetric_group(n, name=None, description=None, alternating=False,
-                             cyclic_form=True):
+def generate_symmetric_group(n: int, name:str =None, description: str =None,
+                             alternating: bool =False, cyclic_form:bool =True):
     """Generates a symmetric or alternating group on n elements."""
     if alternating:
         txt = ["A", "alternating"]
@@ -70,7 +72,7 @@ def generate_symmetric_group(n, name=None, description=None, alternating=False,
     return make_finite_algebra(nm, desc, list(elem_dict.keys()), index_table)
 
 
-def generate_powerset_group(n, name=None, description=None):
+def generate_powerset_group(n: int, name: str =None, description: str =None):
     """Generates a group on the powerset of {0, 1, 2, ..., n-1},
     where symmetric difference is the operator.
     """
@@ -90,7 +92,7 @@ def generate_powerset_group(n, name=None, description=None):
     return make_finite_algebra(nm, desc, elements, table)
 
 
-def generate_commutative_monoid(order, elem_name='a', name=None, description=None):
+def generate_commutative_monoid(order: int, elem_name: str ='a', name: str =None, description: str =None):
     """Generates a commutative monoid over {0,1,2,...,n-1}, where op(a,b) = (a * b) % n."""
     if name:
         nm = name
@@ -106,7 +108,7 @@ def generate_commutative_monoid(order, elem_name='a', name=None, description=Non
     return make_finite_algebra(nm, desc, elements, table)
 
 
-def generate_relative_primes_group(n, name=None, description=None):
+def generate_relative_primes_group(n: int, name: str =None, description: str =None):
     """Generates a group based on mult mod n of relatively-prime numbers < n.
     In keeping with the convention in this module, the elements are converted to strings."""
     if name:
@@ -124,7 +126,7 @@ def generate_relative_primes_group(n, name=None, description=None):
     return make_finite_algebra(nm, desc, elems_as_str, table)
 
 
-def generate_powerset_ring(n, name=None, description=None):
+def generate_powerset_ring(n: int, name: str = None, description: str = None):
     """Generates a ring on the powerset of {0, 1, 2, ..., n-1}, where n is a positive integer,
     symmetric difference is the addition operator, and intersection is the multiplication operator."""
     if name:
@@ -153,7 +155,7 @@ def generate_powerset_ring(n, name=None, description=None):
     return make_finite_algebra(nm, desc, elements, addition_table, mult_table)
 
 
-def generate_algebra_mod_n(n, elem_name='', name=None, description=None):
+def generate_algebra_mod_n(n: int, elem_name: str ='', name: str =None, description: str =None):
     """Generate a ring (or field) based on integer addition and multiplication modulo n.
     If n is prime, then result will be a Field, otherwise it will be a Ring."""
 
@@ -183,7 +185,7 @@ def generate_algebra_mod_n(n, elem_name='', name=None, description=None):
     return make_finite_algebra(nm, desc, elements, add_table, mult_table)
 
 
-def generate_nxn_matrix_algebra(ring, element_name_prefix='a'):
+def generate_nxn_matrix_algebra(ring: Ring, element_name_prefix: str ='a'):
     """Generate a ring (or field) based on all possible 2x2 abstract matrices using
     elements from the input ring. For now, n is hardcoded to 2.
     Three items are returned:
@@ -235,7 +237,7 @@ def generate_nxn_matrix_algebra(ring, element_name_prefix='a'):
     return algebra, elem_dict, rev_dict
 
 
-def generate_dihedral_group(n, verbose=False):
+def generate_dihedral_group(n: int, verbose: bool =False):
     """Automatically generate a dihedral group of order 2n."""
 
     r = Perm.from_cycles([list(range(0, n))])  # Rotation

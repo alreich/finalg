@@ -152,6 +152,10 @@ class TestGroup(TestCase):
                                       [[0, 1, 2, 3], [1, 0, 3, 2], [2, 3, 0, 1], [3, 2, 1, 0]])
         self.v4x = make_finite_algebra('V4', 'Klein-4 group', ['e', 'h', 'v', 'r'],
                                        [[0, 1, 2, 3], [1, 0, 3, 2], [2, 3, 0, 1], [3, 2, 1, 0]])
+        self.trivial = make_finite_algebra('Trivial', 'Trivial group for testing and etc.', ['e'], [[0]])
+        self.a4 = generate_symmetric_group(4, alternating=True)
+        self.s5 = generate_symmetric_group(5)
+        self.a5 = generate_symmetric_group(5, alternating=True)
 
     def test_element_orders(self):
         self.assertEqual(self.v4.element_order('e'), 1)
@@ -245,6 +249,18 @@ class TestGroup(TestCase):
 
     def test_not_isomorphic(self):
         self.assertFalse(self.z4.isomorphic(self.v4))
+
+    def test_trivial_group_is_solvable(self):
+        self.assertTrue(self.trivial.is_solvable())
+
+    def test_a4_is_solvable(self):
+        self.assertTrue(self.a4.is_solvable())
+
+    def test_s5_is_not_solvable(self):
+        self.assertFalse(self.s5.is_solvable())
+
+    def test_a5_is_not_solvable(self):
+        self.assertFalse(self.a5.is_solvable())
 
 
 class TestRing(TestCase):
@@ -340,3 +356,36 @@ class TestField(TestCase):
         self.assertEqual(self.subgrp.elements, ('1', 'a', '1+a'))
         self.assertEqual(self.subgrp.table.tolist(), [[0, 1, 2], [1, 2, 0], [2, 0, 1]])
 
+
+# class TestIsSolvable(TestCase):
+#     """Tests for Group.is_solvable(), based on the derived (commutator)
+#     series. A group is solvable iff repeated application of
+#     commutator_subalgebra() eventually reaches the trivial group.
+#
+#     Test groups:
+#       - trivial:  order 1               -> solvable (vacuously)
+#       - A_4:      order 12, solvable    -> derived series: A_4 -> V_4 -> {e}
+#       - S_5:      order 120, not solv.  -> derived series stalls at A_5
+#       - A_5:      order 60, not solv.   -> simple, non-abelian; derived
+#                                             series stalls at A_5 itself
+#     """
+#
+#     @classmethod
+#     def setUpClass(cls):
+#         # cls.trivial = fg.trivial
+#         cls.trivial = make_finite_algebra('Trivial', 'Trivial group for testing and etc.', ['e'], [[0]])
+#         cls.a4 = generate_symmetric_group(4, alternating=True)
+#         cls.s5 = generate_symmetric_group(5)
+#         cls.a5 = generate_symmetric_group(5, alternating=True)
+#
+#     def test_trivial_group_is_solvable(self):
+#         self.assertTrue(self.trivial.is_solvable())
+#
+#     def test_a4_is_solvable(self):
+#         self.assertTrue(self.a4.is_solvable())
+#
+#     def test_s5_is_not_solvable(self):
+#         self.assertFalse(self.s5.is_solvable())
+#
+#     def test_a5_is_not_solvable(self):
+#         self.assertFalse(self.a5.is_solvable())

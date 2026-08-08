@@ -66,6 +66,22 @@ class Group(Monoid):
                                              name=f"{self.name}_Comm",
                                              desc=f"{self.name} commutator subalgebra")
 
+    def is_solvable(self):
+        """Return True or False depending on whether this group is solvable.
+        If successive applications of commutator_subalgebra() lead to the
+        trivial group, then it's solvable. Otherwise, it's not solvable.
+        """
+
+        def solvable_aux(grp, sub):
+            if sub.order == 1:
+                return True
+            elif sub.order == grp.order:
+                return False
+            else:
+                return solvable_aux(sub, sub.commutator_subalgebra())
+
+        return solvable_aux(self, self.commutator_subalgebra())
+
     def is_normal(self, subgrp):
         """Returns True if the subgroup is normal, otherwise False is returned"""
         for x in self:

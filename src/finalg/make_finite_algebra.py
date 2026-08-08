@@ -66,7 +66,7 @@ def make_finite_algebra(*args):
     And the fifth argument should be a function that implements the binary
     operation for "scaling vectors".
 
-    See the definitions and examples at https://abstract-algebra.readthedocs.io
+    See the definitions and examples at https://finalg.readthedocs.io
     """
 
     if len(args) == 1:

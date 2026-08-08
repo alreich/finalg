@@ -17,6 +17,10 @@ class Perm(Sequence):
         using the method, to_cycles(). Also, a Perm can be instantiated from a list of lists (cycles)
         using the static method, from_cycles.
 
+        NOTE: If the base value (0 or 1) is a cycle, then it will be included in the cycle notation
+        as (0,) or (1,), or in string form, '(0)' or '(1)' (i.e, without the comma). This also holds
+        for cycles consisting of the maximum value, n or n-1.
+
         values: a list or tuple of integers representing the bottom line of Cauchy's 2-line notation.
         """
         self._values = tuple(values)

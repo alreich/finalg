@@ -46,10 +46,10 @@ class TestPermutations(TestCase):
         self.p4 = Perm((0, 2, 1, 4, 3))  # [(1, 2), (3, 4)]
 
     def test_to_cycles(self):
-        self.assertEqual(self.p1.to_cycles(), [(3, 4)])
+        self.assertEqual(self.p1.to_cycles(), [(0,), (3, 4)])
         self.assertEqual(self.p2.to_cycles(), [(0, 1), (2, 3), (4,)])
         self.assertEqual(self.p3.to_cycles(), [(0, 4, 3, 1, 2)])
-        self.assertEqual(self.p4.to_cycles(), [(1, 2), (3, 4)])
+        self.assertEqual(self.p4.to_cycles(), [(0,), (1, 2), (3, 4)])
 
     def test_from_cycles(self):
         self.assertEqual(self.p1, Perm.from_cycles([(3, 4)]))

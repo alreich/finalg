@@ -13,8 +13,9 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
 from finalg import make_finite_algebra, generate_cyclic_group
-from finalg.magma import Magma
+# from finalg.magma import Magma
 from finalg.cayley_table import CayleyTable
+from finalg.element import Element
 
 
 def make_v4():
@@ -54,6 +55,7 @@ class TestFiniteAlgebraBasics(TestCase):
         em = self.v4.element_map()
         self.assertEqual(set(em.keys()), set(self.v4.elements))
         for name, elem in em.items():
+            self.assertIsInstance(elem, Element)
             self.assertEqual(elem.name, name)
             self.assertIs(elem.algebra, self.v4)
 
@@ -190,9 +192,9 @@ class TestDirectProductAndPower(TestCase):
 
     def test_power_non_positive_int_raises(self):
         with self.assertRaises(ValueError):
-            self.v4 ** 0
+            _ = self.v4 ** 0
         with self.assertRaises(ValueError):
-            self.v4 ** -1
+            _ = self.v4 ** -1
 
 
 class TestElementToPower(TestCase):

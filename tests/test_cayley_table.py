@@ -1,10 +1,39 @@
 """
-@author: Alfred J. Reich
+Unit tests for finalg.cayley_table: CayleyTable, make_cayley_table,
+index_table_from_name_table, and about_tables.
 
+@author: Alfred J. Reich
 """
 
+import io
+import contextlib
 from unittest import TestCase
-from finalg.cayley_table import CayleyTable, about_tables
+
+from finalg.cayley_table import (
+    CayleyTable,
+    make_cayley_table,
+    index_table_from_name_table,
+    about_tables,
+)
+
+
+class TestCayleyTableConstruction(TestCase):
+
+    def test_valid_square_table(self):
+        tbl = CayleyTable([[0, 1], [1, 0]])
+        self.assertEqual(tbl.order, 2)
+
+    def test_non_square_table_raises(self):
+        with self.assertRaises(Exception):
+            CayleyTable([[0, 1, 2], [1, 0, 2]])
+
+    def test_out_of_range_high_raises(self):
+        with self.assertRaises(Exception):
+            CayleyTable([[0, 1], [1, 2]])
+
+    def test_out_of_range_negative_raises(self):
+        with self.assertRaises(Exception):
+            CayleyTable([[0, 1], [1, -1]])
 
 
 class TestCayleyTable(TestCase):
@@ -137,6 +166,11 @@ class TestCayleyTable(TestCase):
         id2 = 0
         self.assertEqual(tb2.inverse_lookup_dict(id2), {0: 0, 1: 3, 2: 2, 3: 1})
 
+    def test_inverse_lookup_dict_with_element_names(self):
+        tb2 = self.test_tables[2]  # Z4
+        result = tb2.inverse_lookup_dict(0, elements=('e', 'a', 'a2', 'a3'))
+        self.assertEqual(result, {'e': 'e', 'a': 'a3', 'a2': 'a2', 'a3': 'a'})
+
     def test_table_order(self):
         result = [tbl.order for tbl in self.all_tables]
         self.assertEqual(result, [3, 6, 4, 8, 6, 10, 4, 4, 6, 4, 4, 6])
@@ -184,6 +218,36 @@ class TestCayleyTable(TestCase):
     def test_equal(self):
         self.assertEqual(CayleyTable(self.tbl1), CayleyTable(self.tbl1_copy))
 
+    def test_not_equal_different_tables(self):
+        self.assertNotEqual(CayleyTable(self.tbl1), CayleyTable(self.tbl3))
+
+    def test_equal_to_non_cayley_table_is_not_implemented(self):
+        self.assertFalse(CayleyTable(self.tbl1) == [[0, 1, 0], [1, 1, 2], [0, 2, 2]])
+        self.assertTrue(CayleyTable(self.tbl1) != "not a table")
+
+    def test_hash_raises_because_key_is_a_tuple_of_lists(self):
+        # NOTE: CayleyTable.__hash__ hashes a tuple-of-lists (from tolist()), and
+        # lists are unhashable, so __hash__ currently always raises TypeError,
+        # despite __eq__ being defined. This test documents that existing behavior;
+        # if __hash__ is ever fixed, this test should be updated accordingly.
+        with self.assertRaises(TypeError):
+            hash(CayleyTable(self.tbl1))
+
+    def test_repr_roundtrips_via_eval(self):
+        tbl = CayleyTable(self.tbl3)
+        rebuilt = eval(repr(tbl))
+        self.assertEqual(tbl, rebuilt)
+
+    def test_getitem(self):
+        tbl = CayleyTable(self.tbl3)
+        self.assertEqual(tbl[1, 2], 3)
+        self.assertEqual(tbl[0, 0], 0)
+
+    def test_table_property_returns_ndarray(self):
+        tbl = CayleyTable(self.tbl3)
+        self.assertEqual(tbl.table.shape, (4, 4))
+        self.assertEqual(tbl.table[2][1], 3)
+
     def test_mult_distributes_over_add(self):
         result = [m.distributes_over(a) for (m, a) in zip(self.test_tables_mult, self.test_tables_add)]
         self.assertEqual(result, [True, True, True])
@@ -192,5 +256,106 @@ class TestCayleyTable(TestCase):
         result = [a.distributes_over(m) for (m, a) in zip(self.test_tables_mult, self.test_tables_add)]
         self.assertEqual(result, [False, False, False])
 
+    def test_distributes_over_verbose_smoke(self):
+        # Just make sure the verbose branch runs without error and gives the same answer.
+        m, a = self.test_tables_mult[0], self.test_tables_add[0]
+        with contextlib.redirect_stdout(io.StringIO()):
+            result = a.distributes_over(m, verbose=True)
+        self.assertFalse(result)
+
+    def test_has_cancellation_verbose_smoke(self):
+        with contextlib.redirect_stdout(io.StringIO()):
+            result = CayleyTable(self.tbl9).has_cancellation(verbose=True)
+        self.assertTrue(result)
+
+    def test_table_entries_where_equal_to(self):
+        tbl = CayleyTable(self.tbl3)  # Z4
+        pairs = tbl.table_entries_where_equal_to(0)
+        pairs_as_ints = sorted((int(r), int(c)) for r, c in pairs)
+        self.assertEqual(pairs_as_ints, [(0, 0), (1, 3), (2, 2), (3, 1)])
+
+    def test_type_of_algebra_magma(self):
+        self.assertEqual(CayleyTable(self.tbl1).type_of_algebra(), "Magma")
+
+    def test_type_of_algebra_group(self):
+        self.assertEqual(CayleyTable(self.tbl2).type_of_algebra(), "Group")
+        self.assertEqual(CayleyTable(self.tbl3).type_of_algebra(), "Group")
+
+    def test_type_of_algebra_semigroup(self):
+        self.assertEqual(CayleyTable(self.tbl5).type_of_algebra(), "Semigroup")
+
+    def test_type_of_algebra_quasigroup(self):
+        self.assertEqual(CayleyTable(self.tbl9).type_of_algebra(), "Quasigroup")
+
+    def test_type_of_algebra_monoid(self):
+        # Commutative multiplication mod 4 has an identity ('1') but 0 & 2 lack inverses.
+        monoid_tbl = CayleyTable([[(a * b) % 4 for b in range(4)] for a in range(4)])
+        self.assertEqual(monoid_tbl.type_of_algebra(), "Monoid")
+
+    def test_type_of_algebra_loop(self):
+        loop_tbl = CayleyTable([[0, 1, 2, 3, 4, 5, 6],
+                                 [1, 2, 0, 5, 6, 4, 3],
+                                 [2, 0, 1, 6, 5, 3, 4],
+                                 [3, 6, 5, 4, 0, 1, 2],
+                                 [4, 5, 6, 0, 3, 2, 1],
+                                 [5, 3, 4, 2, 1, 6, 0],
+                                 [6, 4, 3, 1, 2, 0, 5]])
+        self.assertEqual(loop_tbl.type_of_algebra(), "Loop")
+
+    def test_about_printout_smoke(self):
+        buf = io.StringIO()
+        with contextlib.redirect_stdout(buf):
+            result = CayleyTable(self.tbl3)._about(printout=True)
+        self.assertIsNone(result)
+        self.assertIn("Order", buf.getvalue())
+
+    def test_about_no_printout_returns_tuple(self):
+        result = CayleyTable(self.tbl1)._about(printout=False)
+        self.assertEqual(len(result), 9)
+        self.assertEqual(result[0], "3")  # order
+        self.assertEqual(result[8], "Magma")  # algebra type
+
     def test_about_tables(self):
-        about_tables(self.test_tables)
+        buf = io.StringIO()
+        with contextlib.redirect_stdout(buf):
+            about_tables(self.test_tables)
+        output = buf.getvalue()
+        self.assertIn("Algebra?", output)
+        self.assertIn("Group", output)
+
+
+class TestMakeCayleyTable(TestCase):
+
+    def test_from_index_table(self):
+        elements = ('e', 'a', 'a2', 'a3')
+        result = make_cayley_table([[0, 1, 2, 3], [1, 2, 3, 0], [2, 3, 0, 1], [3, 0, 1, 2]], elements)
+        self.assertIsInstance(result, CayleyTable)
+        self.assertEqual(result.tolist(), [[0, 1, 2, 3], [1, 2, 3, 0], [2, 3, 0, 1], [3, 0, 1, 2]])
+
+    def test_from_name_table(self):
+        elements = ('e', 'a', 'a2', 'a3')
+        name_table = [['e', 'a', 'a2', 'a3'],
+                      ['a', 'a2', 'a3', 'e'],
+                      ['a2', 'a3', 'e', 'a'],
+                      ['a3', 'e', 'a', 'a2']]
+        result = make_cayley_table(name_table, elements)
+        self.assertIsInstance(result, CayleyTable)
+        self.assertEqual(result.tolist(), [[0, 1, 2, 3], [1, 2, 3, 0], [2, 3, 0, 1], [3, 0, 1, 2]])
+
+    def test_from_a_table_of_names_matches_index_version(self):
+        elements = ('e', 'a', 'a2', 'a3')
+        index_table = [[0, 1, 2, 3], [1, 2, 3, 0], [2, 3, 0, 1], [3, 0, 1, 2]]
+        name_table = [['e', 'a', 'a2', 'a3'],
+                      ['a', 'a2', 'a3', 'e'],
+                      ['a2', 'a3', 'e', 'a'],
+                      ['a3', 'e', 'a', 'a2']]
+        self.assertEqual(make_cayley_table(index_table, elements), make_cayley_table(name_table, elements))
+
+
+class TestIndexTableFromNameTable(TestCase):
+
+    def test_basic_conversion(self):
+        elements = ['r', 'p', 's']
+        name_table = [['r', 'p', 'r'], ['p', 'p', 's'], ['r', 's', 's']]
+        result = index_table_from_name_table(elements, name_table)
+        self.assertEqual(result, [[0, 1, 0], [1, 1, 2], [0, 2, 2]])

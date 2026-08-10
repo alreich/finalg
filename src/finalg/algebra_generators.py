@@ -15,8 +15,8 @@ from finalg.utilities import powerset, compress_runs
 from finalg.my_math import relative_primes
 from finalg.ring import Ring
 
-def generate_cyclic_group(order: int, elem_name: str = '', name: str = None,
-                          description: str = None, zfill: bool = False):
+def generate_cyclic_group(order: int, elem_name: str = '', name: (str | None) = None,
+                          description: (str | None) = None, zfill: bool = False):
     """Generates a cyclic group with the given order. If zfill is True, then left fill element
     names with zeros."""
     if name:
@@ -36,7 +36,7 @@ def generate_cyclic_group(order: int, elem_name: str = '', name: str = None,
     return make_finite_algebra(nm, desc, elements, table)
 
 
-def generate_symmetric_group(n: int, name:str =None, description: str =None,
+def generate_symmetric_group(n: int, name: (str | None) =None, description: (str | None) =None,
                              alternating: bool =False, cyclic_form:bool =True):
     """Generates a symmetric or alternating group on n elements."""
     if alternating:
@@ -72,7 +72,7 @@ def generate_symmetric_group(n: int, name:str =None, description: str =None,
     return make_finite_algebra(nm, desc, list(elem_dict.keys()), index_table)
 
 
-def generate_powerset_group(n: int, name: str =None, description: str =None):
+def generate_powerset_group(n: int, name: (str | None) =None, description: (str | None) =None):
     """Generates a group on the powerset of {0, 1, 2, ..., n-1},
     where symmetric difference is the operator.
     """
@@ -92,7 +92,8 @@ def generate_powerset_group(n: int, name: str =None, description: str =None):
     return make_finite_algebra(nm, desc, elements, table)
 
 
-def generate_commutative_monoid(order: int, elem_name: str ='a', name: str =None, description: str =None):
+def generate_commutative_monoid(order: int, elem_name: str ='a', name: (str | None) =None,
+                                description: (str | None) =None):
     """Generates a commutative monoid over {0,1,2,...,n-1}, where op(a,b) = (a * b) % n."""
     if name:
         nm = name
@@ -108,7 +109,7 @@ def generate_commutative_monoid(order: int, elem_name: str ='a', name: str =None
     return make_finite_algebra(nm, desc, elements, table)
 
 
-def generate_relative_primes_group(n: int, name: str =None, description: str =None):
+def generate_relative_primes_group(n: int, name: (str | None) =None, description: (str | None) =None):
     """Generates a group based on mult mod n of relatively-prime numbers < n.
     In keeping with the convention in this module, the elements are converted to strings."""
     if name:
@@ -126,7 +127,7 @@ def generate_relative_primes_group(n: int, name: str =None, description: str =No
     return make_finite_algebra(nm, desc, elems_as_str, table)
 
 
-def generate_powerset_ring(n: int, name: str = None, description: str = None):
+def generate_powerset_ring(n: int, name: (str | None) = None, description: (str | None) = None):
     """Generates a ring on the powerset of {0, 1, 2, ..., n-1}, where n is a positive integer,
     symmetric difference is the addition operator, and intersection is the multiplication operator."""
     if name:
@@ -155,7 +156,8 @@ def generate_powerset_ring(n: int, name: str = None, description: str = None):
     return make_finite_algebra(nm, desc, elements, addition_table, mult_table)
 
 
-def generate_algebra_mod_n(n: int, elem_name: str ='', name: str =None, description: str =None):
+def generate_algebra_mod_n(n: int, elem_name: str ='', name: (str | None) =None,
+                           description: (str | None) =None):
     """Generate a ring (or field) based on integer addition and multiplication modulo n.
     If n is prime, then result will be a Field, otherwise it will be a Ring."""
 

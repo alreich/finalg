@@ -52,6 +52,8 @@ class TestFiniteAlgebraBasics(TestCase):
         self.assertEqual(self.v4[1], 'h')
 
     def test_element_map(self):
+        """elememt_map is inherited from FiniteAlgebra, and is used together
+        with the context manager, InfixNotation."""
         em = self.v4.element_map()
         self.assertEqual(set(em.keys()), set(self.v4.elements))
         for name, elem in em.items():

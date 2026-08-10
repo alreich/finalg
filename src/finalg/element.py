@@ -31,10 +31,13 @@ class Element:
         return self._algebra
 
     def __str__(self):
+        """str(Element) returns the name of the element (str) it represents"""
         return self._name
 
     def __repr__(self):
-        return repr(self._name)
+        """Element representation is a string, '<AlgebraName:ElementName>', e.g., <V4:h>."""
+        return f"<{self._algebra.name}:{self._name}>"
+        # return repr(self._name)
 
     def __add__(self, other):
         elem = self._algebra.op(self._name, other.name)

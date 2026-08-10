@@ -172,10 +172,10 @@ class AbstractMatrix:
         return np.array2string(self._array, separator=', ')
 
     def __key(self):
-        return tuple(self._array.tolist())
+        return tuple(tuple(row) for row in self._array.tolist())
 
     def __hash__(self):
-        return hash(self.__key)
+        return hash(self.__key())
 
     def __eq__(self, other):
         if isinstance(other, AbstractMatrix):

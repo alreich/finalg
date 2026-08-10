@@ -77,16 +77,13 @@ class TestElementArithmeticOnGroup(TestCase):
     def test_equality_with_non_element_not_implemented(self):
         self.assertFalse(self.elem('1') == '1')
 
-    def test_hash_inconsistent_with_equality(self):
-        # NOTE: Element.__hash__ calls `hash(self.__key)` (missing parens), which
-        # hashes the *bound method* self.__key rather than its return value. Bound
-        # methods hash based on instance identity, so two Elements that compare equal
-        # (same name & algebra) generally have DIFFERENT hashes. This test documents
-        # that real, currently-existing behavior.
+    def test_hash_consistent_with_equality(self):
+        # Element.__hash__ was fixed to call __key() (previously hashed the bound
+        # method itself). Equal Elements now hash equal.
         a = self.elem('1')
         b = Element('1', self.z4)
         self.assertEqual(a, b)
-        self.assertNotEqual(hash(a), hash(b))
+        self.assertEqual(hash(a), hash(b))
 
 
 class TestElementArithmeticOnField(TestCase):

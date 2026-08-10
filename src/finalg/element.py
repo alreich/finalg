@@ -86,7 +86,7 @@ class Element:
         return tuple([self._name, self._algebra.__hash__()])
 
     def __hash__(self):
-        return hash(self.__key)
+        return hash(self.__key())
 
     def __eq__(self, other):
         if isinstance(other, Element):

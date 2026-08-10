@@ -59,7 +59,7 @@ class CayleyTable:
         return NotImplemented
 
     def __key(self):
-        return tuple(self._table.tolist())
+        return tuple(tuple(row) for row in self._table.tolist())
 
     @property
     def order(self):

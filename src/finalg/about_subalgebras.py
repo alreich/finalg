@@ -45,6 +45,9 @@ def about_isomorphic_partition(alg, part):
     """
     size = len(part)
 
+    if size == 0:
+        raise ValueError("A partition must have at least one member.")
+
     # All the algebras in a partition are isomorphic to each other,
     # so, get (most) properties from the first algebra in the partition
     sub0 = part[0]

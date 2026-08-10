@@ -149,6 +149,9 @@ class TestRingElementOrder(TestCase):
         self.assertEqual(r6.element_order('1'), 6)
         self.assertEqual(r6.element_order('2'), 3)
         self.assertEqual(r6.element_order('3'), 2)
+
+
+class TestCayleyDicksonConstruction(TestCase):
     """Builds Gaussian-integer-like rings via the Cayley-Dickson construction."""
 
     def setUp(self):
@@ -194,14 +197,13 @@ class TestRingElementOrder(TestCase):
         # 2 + 2i: 2^2 + 2^2 = 8, not prime -> not a Gaussian prime
         self.assertFalse(self.zi3.is_gaussian_prime('2:2'))
 
-    def test_is_gaussian_prime_on_scalar_element_is_broken(self):
-        # NOTE: is_gaussian_prime's dimension==0 branch sets `real = elem` without
-        # converting the string element name to an int, so calling it on a base
-        # (non-compound) Ring/Field element raises an error from sympy's isprime
-        # rather than returning a boolean. This test documents that real,
-        # currently-existing bug.
-        with self.assertRaises(ValueError):
-            self.f3.is_gaussian_prime('2')
+    def test_is_gaussian_prime_on_scalar_element(self):
+        # is_gaussian_prime's dimension==0 branch now converts the string element
+        # name to int before checking primality, so it works on base-ring elements.
+        # '2' mod 3 -> real=2, imag=0: isprime(2) and 2 % 4 == 3 is False, so not prime.
+        self.assertFalse(self.f3.is_gaussian_prime('2'))
+        # '0' mod 3 -> real=0, imag=0: falls into the imag==0 branch; isprime(0) is False.
+        self.assertFalse(self.f3.is_gaussian_prime('0'))
 
     def test_make_cayley_dickson_algebra_versions_2_and_3_require_mu_without_identity(self):
         # Build a mult-identity-less ring by using a Ring with no mult identity.
@@ -219,8 +221,10 @@ class TestRingElementOrder(TestCase):
         self.assertEqual(self.zi3, zi3_copy)
         self.assertIn('Field(', repr(self.zi3))
 
-    def test_hash_inconsistent_with_equality(self):
-        # Same missing-parens `_key` bug as Magma/Element (see test_magma.py).
+    def test_hash_consistent_with_equality(self):
+        # Ring.__hash__ was fixed the same way as Magma/Element/CayleyTable/
+        # AbstractMatrix: _key() is now called (not passed as a bound method),
+        # and its tables are converted to nested tuples so they're hashable.
         zi3_copy = self.f3.make_cayley_dickson_algebra()
         self.assertEqual(self.zi3, zi3_copy)
-        self.assertNotEqual(hash(self.zi3), hash(zi3_copy))
+        self.assertEqual(hash(self.zi3), hash(zi3_copy))

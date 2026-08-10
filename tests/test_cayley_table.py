@@ -225,13 +225,14 @@ class TestCayleyTable(TestCase):
         self.assertFalse(CayleyTable(self.tbl1) == [[0, 1, 0], [1, 1, 2], [0, 2, 2]])
         self.assertTrue(CayleyTable(self.tbl1) != "not a table")
 
-    def test_hash_raises_because_key_is_a_tuple_of_lists(self):
-        # NOTE: CayleyTable.__hash__ hashes a tuple-of-lists (from tolist()), and
-        # lists are unhashable, so __hash__ currently always raises TypeError,
-        # despite __eq__ being defined. This test documents that existing behavior;
-        # if __hash__ is ever fixed, this test should be updated accordingly.
-        with self.assertRaises(TypeError):
-            hash(CayleyTable(self.tbl1))
+    def test_hash_consistent_with_equality(self):
+        # CayleyTable.__hash__ was fixed to hash a tuple-of-tuples (previously a
+        # tuple-of-lists, which always raised TypeError). Equal tables now hash equal.
+        self.assertEqual(hash(CayleyTable(self.tbl1)), hash(CayleyTable(self.tbl1_copy)))
+
+    def test_hashable_in_a_set(self):
+        s = {CayleyTable(self.tbl1), CayleyTable(self.tbl1_copy), CayleyTable(self.tbl3)}
+        self.assertEqual(len(s), 2)
 
     def test_repr_roundtrips_via_eval(self):
         tbl = CayleyTable(self.tbl3)

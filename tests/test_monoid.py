@@ -117,17 +117,12 @@ class TestMonoidIsomorphismMappings(TestCase):
         m1 = generate_commutative_monoid(4)
         m2 = generate_commutative_monoid(4)
         mappings = m1.make_element_mappings(m2)
-        # Every mapping must send the identity to the identity (this is enforced
-        # by an explicit overwrite at the end of make_element_mappings).
+        # Every mapping must send the identity to the identity.
         self.assertTrue(all(mapping[m1.identity] == m2.identity for mapping in mappings))
-        # NOTE: The method tries to remove the identity before permuting via
-        # `list(elems0copy).remove(id0)`, but that mutates a throwaway list and
-        # never reassigns `elems0copy`, so the identity is NOT actually excluded
-        # from the permuted elements -- it's only forced back afterward by the
-        # explicit `mapping[id0] = id1` overwrite. As a result there are n!
-        # mappings (with duplicates from the overwrite), not (n-1)!. This test
-        # documents that real, currently-existing behavior.
-        self.assertEqual(len(mappings), 24)  # 4! over all 4 elements, not 3!
+        # The identity is now genuinely excluded before permuting, so there are
+        # (n-1)! mappings over the remaining elements, with no duplicates.
+        self.assertEqual(len(mappings), 6)  # 3! for the other 3 elements
+        self.assertEqual(len(mappings), len({tuple(sorted(m.items())) for m in mappings}))
 
     def test_make_element_mappings_different_orders_raises(self):
         m1 = generate_commutative_monoid(4)

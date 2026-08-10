@@ -28,10 +28,10 @@ class Magma(FiniteAlgebra):
         self._dp_delimiter = ':'  # name delimiter used when creating Direct Products
 
     def _key(self):
-        return tuple([self.elements, self.table.tolist()])
+        return tuple([self.elements, tuple(tuple(row) for row in self.table.tolist())])
 
     def __hash__(self):
-        return hash(self._key)
+        return hash(self._key())
 
     def __eq__(self, other):
         if isinstance(other, Magma):

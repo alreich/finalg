@@ -91,10 +91,12 @@ class Ring(Group):
                                    dp_mul_table)
 
     def _key(self):
-        return tuple([self.elements, self.table.tolist(), self._ring_mult_table.tolist()])
+        return tuple([self.elements,
+                      tuple(tuple(row) for row in self.table.tolist()),
+                      tuple(tuple(row) for row in self._ring_mult_table.tolist())])
 
     def __hash__(self):
-        return hash(self._key)
+        return hash(self._key())
 
     def __eq__(self, other):
         if isinstance(other, Ring):
@@ -349,7 +351,7 @@ class Ring(Group):
         delim = self.direct_product_delimiter()
         dimension = elem.count(delim)
         if dimension == 0:
-            real = elem
+            real = int(elem)
             imag = 0
         elif dimension == 1:
             a, b = elem.split(delim)

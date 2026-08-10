@@ -153,14 +153,13 @@ class TestMagmaEquality(TestCase):
     def test_equal_to_non_magma_not_implemented(self):
         self.assertFalse(make_v4() == "not a magma")
 
-    def test_hash_inconsistent_with_equality(self):
-        # NOTE: Magma.__hash__ calls `hash(self._key)` (missing parens on `_key`),
-        # so it hashes the *bound method* rather than its return value. Bound
-        # methods hash by instance identity, so two equal-but-distinct Magma
-        # instances generally hash differently. This documents that real behavior.
+    def test_hash_consistent_with_equality(self):
+        # Magma.__hash__ was fixed to call _key() (previously hashed the bound
+        # method itself), and _key() now converts the table to nested tuples so
+        # it's actually hashable. Equal Magmas now hash equal.
         a, b = make_v4(), make_v4()
         self.assertEqual(a, b)
-        self.assertNotEqual(hash(a), hash(b))
+        self.assertEqual(hash(a), hash(b))
 
 
 class TestDirectProductAndPower(TestCase):

@@ -218,13 +218,12 @@ class TestAbstractMatrix(TestCase):
     def test_repr_is_array2string(self):
         self.assertEqual(repr(self.mat1), np.array2string(self.mat1.array, separator=', '))
 
-    def test_hash_inconsistent_with_equality(self):
-        # NOTE: Same missing-parens bug as CayleyTable/Magma/Element/Ring:
-        # __hash__ calls `hash(self.__key)` (a bound method), not `hash(self.__key())`,
-        # so two matrices that compare equal generally hash differently. Documenting
-        # the real, currently-existing behavior.
+    def test_hash_consistent_with_equality(self):
+        # AbstractMatrix.__hash__ was fixed to call __key() (previously hashed the
+        # bound method itself), and __key() now returns nested tuples so it's
+        # actually hashable. Equal matrices now hash equal.
         self.assertEqual(self.mat1, self.mat1x)
-        self.assertNotEqual(hash(self.mat1), hash(self.mat1x))
+        self.assertEqual(hash(self.mat1), hash(self.mat1x))
 
     def test_to_tuple(self):
         result = self.mat1.to_tuple()

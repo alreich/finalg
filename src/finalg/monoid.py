@@ -177,10 +177,10 @@ class Monoid(Semigroup):
             # Temporarily & non-destructively remove identities from lists of elements
             id0 = self.identity
             id1 = other.identity
-            elems0copy = tuple(self.elements)
-            elems1copy = tuple(other.elements)
-            list(elems0copy).remove(id0)
-            list(elems1copy).remove(id1)
+            elems0copy = list(self.elements)
+            elems1copy = list(other.elements)
+            elems0copy.remove(id0)
+            elems1copy.remove(id1)
 
             # Compute all possible mappings
             mappings = [dict(zip(elems0copy, perm)) for perm in it.permutations(elems1copy)]

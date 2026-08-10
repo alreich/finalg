@@ -93,12 +93,10 @@ class TestAboutIsomorphicPartition(TestCase):
         self.assertIn('Normal', out)  # A3 is normal in S3
 
     def test_empty_partition_raises(self):
-        # NOTE: about_isomorphic_partition accesses part[0] unconditionally near the
-        # top of the function (before the `size == 0` branch that would raise
-        # ValueError is ever reached), so an empty partition actually raises
-        # IndexError rather than the ValueError the final `else` clause suggests.
-        # This test documents that real, currently-existing behavior.
-        with self.assertRaises(IndexError):
+        # about_isomorphic_partition now checks for an empty partition before
+        # touching part[0], so it raises the documented ValueError instead of
+        # an incidental IndexError.
+        with self.assertRaises(ValueError):
             about_isomorphic_partition(self.s3, [])
 
 

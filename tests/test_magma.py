@@ -285,6 +285,54 @@ class TestIsomorphism(TestCase):
         self.assertFalse(self.z4.isomorphic(self.v4))
 
 
+class TestFastIsomorphism(TestCase):
+    """Tests for Magma.fast_isomorphic, mirroring TestIsomorphism above so the
+    two methods are held to the same standard."""
+
+    def setUp(self):
+        self.v4 = make_v4()
+        self.z2 = generate_cyclic_group(2, name="Z2", description="Cyclic group of order 2")
+        self.z4 = generate_cyclic_group(4, name="Z4", description="Cyclic group of order 4")
+
+    def test_fast_isomorphic_v4_and_z2_squared(self):
+        z2_sqr = self.z2 * self.z2
+        mapping = self.v4.fast_isomorphic(z2_sqr)
+        self.assertTrue(mapping)
+        self.assertTrue(self.v4.is_isomorphic_mapping(z2_sqr, mapping))
+
+    def test_agrees_with_isomorphic_on_isomorphic_algebras(self):
+        z2_sqr = self.z2 * self.z2
+        self.assertEqual(bool(self.v4.isomorphic(z2_sqr)), bool(self.v4.fast_isomorphic(z2_sqr)))
+
+    def test_not_isomorphic_different_order(self):
+        self.assertFalse(self.z2.fast_isomorphic(self.z4))
+
+    def test_not_isomorphic_different_class(self):
+        rps = make_rps()
+        self.assertFalse(rps.fast_isomorphic(self.z4))
+
+    def test_not_isomorphic_z4_and_v4(self):
+        self.assertFalse(self.z4.fast_isomorphic(self.v4))
+
+    def test_isomorphic_to_self_after_reordering(self):
+        shuffled = self.z4.reorder_elements(list(reversed(self.z4.elements)))
+        mapping = self.z4.fast_isomorphic(shuffled)
+        self.assertTrue(mapping)
+        self.assertTrue(self.z4.is_isomorphic_mapping(shuffled, mapping))
+
+    def test_non_associative_magma_isomorphic_to_reordering(self):
+        rps = make_rps()
+        shuffled = rps.reorder_elements(list(reversed(rps.elements)))
+        mapping = rps.fast_isomorphic(shuffled)
+        self.assertTrue(mapping)
+        self.assertTrue(rps.is_isomorphic_mapping(shuffled, mapping))
+
+    def test_order_1_algebras(self):
+        trivial = make_finite_algebra('E', 'Trivial group', ['e'], [[0]])
+        mapping = trivial.fast_isomorphic(trivial)
+        self.assertEqual(mapping, {'e': 'e'})
+
+
 class TestClosureAndSubalgebras(TestCase):
 
     def setUp(self):

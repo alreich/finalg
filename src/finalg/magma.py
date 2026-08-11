@@ -3,6 +3,7 @@
 # =========
 
 import itertools as it
+from collections import Counter
 import numpy as np
 import networkx as nx
 from pprint import pprint
@@ -149,6 +150,186 @@ class Magma(FiniteAlgebra):
             return False
         else:
             return False
+
+    # ------------------------------------------------------------------
+    # Faster isomorphism testing via generating sets ("subalgebras")
+    # ------------------------------------------------------------------
+    #
+    # 'isomorphic', above, is brute force: it tries every one of
+    # other.order! bijections between the two element sets. That is fine
+    # for small algebras, but it is hopeless once the order climbs past
+    # roughly 8 or 9.
+    #
+    # 'fast_isomorphic' instead exploits the fact that an isomorphism is
+    # completely determined by where it sends a *generating set* of this
+    # algebra: once the images of the generators are chosen, the image of
+    # every other element is forced, because the generators' closure
+    # (i.e. the chain of subalgebras built up by repeatedly multiplying
+    # known elements together) is the whole algebra. So instead of
+    # searching over all bijections of the full element set, we only
+    # search over bijections of a (usually much smaller) generating set,
+    # and "grow" each candidate the same way 'closure' grows a
+    # subalgebra -- except here we grow the mapping alongside it,
+    # checking consistency at every step and bailing out of bad
+    # candidates as early as possible. Candidate images are also
+    # restricted, up front, to elements that share the same invariants
+    # (row/column "fingerprint", idempotency, element order, etc.),
+    # which are necessarily preserved by any isomorphism.
+
+    def _row_profile(self, x):
+        """Return a sorted tuple describing, for element x, the sizes of the
+        'fibers' of the map y -> self.op(x, y); i.e., for each result value,
+        how many y produce it. This profile (ignoring which result value goes
+        with which count) is preserved by any isomorphism: if f is an
+        isomorphism, then |{y : x*y = z}| == |{y' : f(x)*y' = f(z)}| for all z."""
+        counts = Counter(self.op(x, y) for y in self.elements)
+        return tuple(sorted(counts.values()))
+
+    def _col_profile(self, x):
+        """Column analog of _row_profile: the fiber-size profile of y -> self.op(y, x)."""
+        counts = Counter(self.op(y, x) for y in self.elements)
+        return tuple(sorted(counts.values()))
+
+    def _element_invariant(self, x):
+        """Return a tuple of properties of element x that must be shared by its
+        image under any isomorphism. Used to prune candidate images before
+        searching for an isomorphism, rather than trying every element."""
+        inv = [self._row_profile(x), self._col_profile(x), self.op(x, x) == x]
+        if hasattr(self, 'element_order'):  # Monoids (& subclasses) can compute this cheaply
+            inv.append(self.element_order(x))
+        return tuple(inv)
+
+    def _element_invariants(self):
+        """Return a dict mapping each element of this algebra to its _element_invariant."""
+        return {x: self._element_invariant(x) for x in self.elements}
+
+    def _smallest_generating_set(self):
+        """Return a list of elements of this algebra whose closure, under the
+        algebra's operation, is the entire algebra, preferring the smallest
+        such set available (as found by 'generators')."""
+        gens = self.generators()
+        if len(gens) == 0:
+            return list(self.elements)  # Degenerate fallback; shouldn't normally happen.
+        first = gens[0]
+        # When the algebra is cyclic, 'generators' returns a flat list of individual
+        # elements (each one generates the algebra alone); otherwise, it returns a
+        # list of tuples, each of which is a minimal generating set.
+        if isinstance(first, (tuple, list)):
+            return list(first)
+        else:
+            return [first]
+
+    def _extend_mapping(self, other, partial_map):
+        """Given a partial mapping (dict) whose keys generate this algebra (i.e.,
+        repeatedly applying self.op to known key/value pairs eventually reaches
+        every element), grow it into a mapping over all of self's elements by
+        propagating products: whenever x1 -> y1 and x2 -> y2 are known, x1*x2 must
+        map to y1*y2. If this ever conflicts with an existing entry, or the result
+        isn't a bijection covering every element, return None. Otherwise, return
+        the completed mapping if it verifies as an isomorphism, else None."""
+        mapping = dict(partial_map)
+        n = self.order
+        growing = True
+        while growing and len(mapping) < n:
+            growing = False
+            items = list(mapping.items())
+            for x1, y1 in items:
+                for x2, y2 in items:
+                    x3 = self.op(x1, x2)
+                    y3 = other.op(y1, y2)
+                    if x3 in mapping:
+                        if mapping[x3] != y3:
+                            return None  # Inconsistent: not a valid candidate.
+                    else:
+                        mapping[x3] = y3
+                        growing = True
+        if len(mapping) != n or len(set(mapping.values())) != n:
+            return None  # Generators didn't reach every element, or map isn't a bijection.
+        return mapping if self.is_isomorphic_mapping(other, mapping) else None
+
+    def fast_isomorphic(self, other, verbose=False):
+        """A faster alternative to 'isomorphic' for determining whether this algebra
+        and 'other' are isomorphic, and if so, returning the mapping (a dict) between
+        their elements.
+
+        Instead of brute-force trying all other.order! bijections, this method:
+          1. Rules out obviously non-isomorphic algebras cheaply (class, order,
+             whether an identity exists, commutativity).
+          2. Computes an isomorphism-invariant signature for every element of both
+             algebras (see '_element_invariant'), and bails out immediately if the
+             multiset of signatures doesn't match between the two algebras.
+          3. Finds a small generating set for this algebra -- a set of elements
+             whose repeated products ("closure") reach every element, i.e., build up
+             a chain of subalgebras that ends at the whole algebra.
+          4. Tries only the images for those generators that share the right
+             signature, and, for each candidate, extends it to a full mapping by
+             propagating products the same way 'closure' grows a subalgebra,
+             checking consistency at each step and abandoning bad candidates as
+             soon as a conflict appears.
+
+        Because step 3 usually finds a generating set that is far smaller than the
+        whole algebra, and step 2 shrinks the candidate images for each generator,
+        the number of candidates actually tried is normally a tiny fraction of
+        other.order!, and inconsistent candidates tend to fail fast rather than
+        being checked against the whole table. Set verbose=True to see a little
+        information about the search as it runs.
+
+        Returns the mapping (dict) if the algebras are isomorphic; otherwise False.
+        """
+        if (self.__class__.__name__ != other.__class__.__name__) or (self.order != other.order):
+            return False
+        if self.has_identity() != other.has_identity():
+            return False
+        if self.is_commutative() != other.is_commutative():
+            return False
+
+        n = self.order
+        if n == 1:
+            return {self.elements[0]: other.elements[0]}
+
+        inv0 = self._element_invariants()
+        inv1 = other._element_invariants()
+
+        if Counter(inv0.values()) != Counter(inv1.values()):
+            if verbose:
+                print("Element invariants don't match between the two algebras; not isomorphic.")
+            return False
+
+        if self.has_identity() and inv0[self.identity] != inv1[other.identity]:
+            return False
+
+        gens = self._smallest_generating_set()
+
+        # Group other's elements by invariant, so candidate images can be looked up directly.
+        by_invariant = {}
+        for e in other.elements:
+            by_invariant.setdefault(inv1[e], []).append(e)
+        candidate_lists = [by_invariant.get(inv0[g], []) for g in gens]
+
+        if any(len(cands) == 0 for cands in candidate_lists):
+            return False  # A generator has no element in 'other' with a matching invariant.
+
+        if verbose:
+            print(f"Generating set (size {len(gens)}): {gens}")
+            print(f"Candidate image counts per generator: {[len(c) for c in candidate_lists]}")
+
+        tried = 0
+        for images in it.product(*candidate_lists):
+            if len(set(images)) != len(images):
+                continue  # Images of distinct generators must be distinct.
+            tried += 1
+            partial = dict(zip(gens, images))
+            if self.has_identity():
+                partial[self.identity] = other.identity
+            mapping = self._extend_mapping(other, partial)
+            if mapping is not None:
+                if verbose:
+                    print(f"Isomorphism found after trying {tried} generator-image assignment(s).")
+                return mapping
+
+        if verbose:
+            print(f"Tried {tried} generator-image assignment(s); no isomorphism found.")
+        return False
 
     def closure(self, subset_of_elements, include_inverses):
         """Given a subset (in list form) of the group's elements (name strings),

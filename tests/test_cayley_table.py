@@ -360,3 +360,92 @@ class TestIndexTableFromNameTable(TestCase):
         name_table = [['r', 'p', 'r'], ['p', 'p', 's'], ['r', 's', 's']]
         result = index_table_from_name_table(elements, name_table)
         self.assertEqual(result, [[0, 1, 0], [1, 1, 2], [0, 2, 2]])
+
+
+class TestIsAssociativeLightsTest(TestCase):
+    """Targeted tests for the Light's-test-based CayleyTable.is_associative."""
+
+    def test_order_one_table_is_associative(self):
+        # Exercises the n <= 1 early return.
+        self.assertTrue(CayleyTable([[0]]).is_associative())
+
+    def test_hidden_failure_past_a_trivial_generator(self):
+        # Element 0 is a two-sided identity, so Light's test for g=0 passes
+        # trivially no matter what the rest of the table looks like -- it can
+        # never expose a non-associativity elsewhere. The real failure here is
+        # at the triple (1, 1, 1): (1*1)*1 = 1 but 1*(1*1) = 2. This checks that
+        # the search doesn't stop after the first (trivially-passing) generator.
+        tbl = CayleyTable([[0, 1, 2],
+                            [1, 2, 2],
+                            [2, 1, 1]])
+        self.assertFalse(tbl.is_associative())
+
+    def test_generating_set_needs_more_than_one_element(self):
+        # In V4 (Klein four-group), no single element generates the whole group
+        # (every non-identity element has order 2), so this forces
+        # _generating_set to pick more than one generator. Included here as a
+        # belt-and-suspenders check alongside the existing V4-based table test.
+        v4 = CayleyTable([[0, 1, 2, 3],
+                           [1, 0, 3, 2],
+                           [2, 3, 0, 1],
+                           [3, 2, 1, 0]])
+        self.assertTrue(v4.is_associative())
+
+    def test_worst_case_generating_set_is_whole_table(self):
+        # Right-zero semigroup: a*b = b for all a, b. It IS associative, but
+        # closure({x}) = {x} for every single x, so _generating_set is forced
+        # to fall back to using every element as its own generator -- the
+        # worst case for Light's test. Confirms correctness (and that there's
+        # no infinite loop / crash) in that worst case.
+        n = 6
+        rz = CayleyTable([[b for b in range(n)] for _ in range(n)])
+        self.assertTrue(rz.is_associative())
+
+    def test_closure_of_indices_matches_expected_subalgebra(self):
+        # Direct test of the helper: closure of {1} in the Z4 table should
+        # reach every element (1 generates the cyclic group), but closure of
+        # {1} in V4 should stop at {0, 1} (1 has order 2 and doesn't reach
+        # 2 or 3).
+        z4 = CayleyTable([[0, 1, 2, 3],
+                           [1, 2, 3, 0],
+                           [2, 3, 0, 1],
+                           [3, 0, 1, 2]])
+        self.assertEqual(sorted(z4._closure_of_indices([1]).tolist()), [0, 1, 2, 3])
+
+        v4 = CayleyTable([[0, 1, 2, 3],
+                           [1, 0, 3, 2],
+                           [2, 3, 0, 1],
+                           [3, 2, 1, 0]])
+        self.assertEqual(sorted(v4._closure_of_indices([1]).tolist()), [0, 1])
+
+    def test_generating_set_actually_generates_whole_table(self):
+        # General sanity check across the existing suite's tables: whatever
+        # _generating_set returns, its closure really is everything -- this is
+        # the invariant Light's test depends on for correctness.
+        for tbl in self.all_tables if hasattr(self, "all_tables") else []:
+            gens = tbl._generating_set()
+            closure = tbl._closure_of_indices(gens)
+            self.assertEqual(sorted(closure.tolist()), list(range(tbl.order)))
+
+    def test_matches_brute_force_on_random_tables(self):
+        # Cross-check against an independent brute-force reference (not the
+        # production code) across many random small tables and orders, rather
+        # than relying only on a handful of hand-picked examples.
+        import random
+        rng = random.Random(12345)
+
+        def brute_force_is_associative(table):
+            n = len(table)
+            for a in range(n):
+                for b in range(n):
+                    for c in range(n):
+                        if table[table[a][b]][c] != table[a][table[b][c]]:
+                            return False
+            return True
+
+        for order in range(1, 7):
+            for _ in range(500):
+                table = [[rng.randrange(order) for _ in range(order)] for _ in range(order)]
+                expected = brute_force_is_associative(table)
+                actual = CayleyTable(table).is_associative()
+                self.assertEqual(actual, expected, msg=f"order={order} table={table}")

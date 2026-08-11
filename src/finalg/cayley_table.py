@@ -80,22 +80,87 @@ class CayleyTable:
         replaces by the element names (str)."""
         return [[elements[index] for index in row] for row in self._table]
 
+    # def is_associative(self):
+    #     """Returns True or False, depending on whether the table supports an associative
+    #     binary operation."""
+    #     indices = range(len(self._table))
+    #     # result = True
+    #     for a in indices:
+    #         for b in indices:
+    #             for c in indices:
+    #                 ab = self._table[a][b]
+    #                 bc = self._table[b][c]
+    #                 if not (self._table[ab][c] == self._table[a][bc]):
+    #                     # result = False
+    #                     # break
+    #                     return False
+    #     # return result
+    #     return True
+
     def is_associative(self):
         """Returns True or False, depending on whether the table supports an associative
-        binary operation."""
-        indices = range(len(self._table))
-        # result = True
-        for a in indices:
-            for b in indices:
-                for c in indices:
-                    ab = self._table[a][b]
-                    bc = self._table[b][c]
-                    if not (self._table[ab][c] == self._table[a][bc]):
-                        # result = False
-                        # break
-                        return False
-        # return result
+        binary operation.
+
+        Uses Light's associativity test: for a fixed element g, define x .g y = (x*g)*y
+        and x *g y = x*(g*y). The whole table is associative if and only if these two
+        derived operations agree for every g in the table's elements. Crucially, it
+        suffices to check this only for g ranging over a *generating set* of the table's
+        elements (under its own operation), rather than for every element: agreement at
+        g=a and g=b forces agreement at g=a*b, so it propagates from the generators to
+        everything they generate. This is normally a large improvement over the brute-
+        force triple loop -- e.g., a cyclic group needs only 1 generator, S_n needs 2 --
+        and even in the worst case (a generating set covering the whole table), the
+        per-generator check below is fully vectorized with NumPy rather than looped over
+        in Python, so it is still comfortably faster than the naive triple-nested loop.
+
+        Returns False as soon as any generator's derived tables disagree, so, as with
+        the original method, this exits early on non-associative tables.
+
+        References:
+          - Light's associativity test; see A.H. Clifford & G.B. Preston, The Algebraic
+            Theory of Semigroups, Vol. I, Math. Surveys No. 7, AMS, 1961.
+          - https://en.wikipedia.org/wiki/Light%27s_associativity_test
+          - For the O(n^2 log n) bound this gives when a small generating set exists
+            (e.g., any group): https://codeforces.com/blog/entry/91731
+        """
+        table = self._table
+        n = table.shape[0]
+        if n <= 1:
+            return True
+        for g in self._generating_set():
+            left = table[:, table[g, :]]  # x * (g * y), for all x, y
+            right = table[table[:, g], :]  # (x * g) * y, for all x, y
+            if not np.array_equal(left, right):
+                return False
         return True
+
+    def _closure_of_indices(self, seed_indices):
+        """Return, as a sorted NumPy array, the closure of the given element indices
+        under this table's binary operation -- the smallest superset of seed_indices
+        such that table[a, b] is in the set for every a, b already in it. Used by
+        '_generating_set', below."""
+        table = self._table
+        result = np.array(sorted(set(int(i) for i in seed_indices)), dtype=int)
+        prev_size = -1
+        while result.size != prev_size:
+            prev_size = result.size
+            products = table[np.ix_(result, result)]
+            result = np.union1d(result, products.ravel())
+        return result
+
+    def _generating_set(self):
+        """Return a list of element indices (not necessarily a minimum-size generating
+        set) whose closure, under this table's binary operation, is the whole table --
+        found greedily by repeatedly adding an as-yet-unreached element and re-closing.
+        Used by 'is_associative' for Light's associativity test."""
+        n = self._table.shape[0]
+        closed = np.array([], dtype=int)
+        gens = []
+        while closed.size < n:
+            remaining = set(range(n)) - set(closed.tolist())
+            gens.append(min(remaining))
+            closed = self._closure_of_indices(np.append(closed, gens[-1]))
+        return gens
 
     def is_commutative(self):
         """Returns True or False, depending on whether the table supports a commutative

@@ -19,7 +19,8 @@ __all__ = ["make_finite_algebra",
            "np_arr_to_tuple",
            "cayley_graph_to_json",
            "compress_runs",
-           "from_sympy_permutation_group"
+           "from_sympy_permutation_group",
+           "to_sympy_permutation_group"
 ]
 
 from finalg.make_finite_algebra import make_finite_algebra
@@ -32,7 +33,7 @@ from finalg.algebra_generators import generate_cyclic_group, generate_symmetric_
     generate_nxn_matrix_algebra, generate_algebra_from_element_dict, generate_dihedral_group
 from finalg.utilities import np_arr_to_tuple, cayley_graph_to_json, compress_runs
 from finalg.permutation import Perm
-from finalg.sympy_interop import from_sympy_permutation_group
+from finalg.sympy_interop import from_sympy_permutation_group, to_sympy_permutation_group
 
 from importlib import resources
 

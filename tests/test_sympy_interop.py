@@ -1,6 +1,6 @@
 """
-Unit tests for finalg.sympy_interop: converting a
-sympy.combinatorics.PermutationGroup into a finalg Group.
+Unit tests for finalg.sympy_interop: converting between a
+sympy.combinatorics.PermutationGroup and a finalg Group, in both directions.
 """
 
 from unittest import TestCase
@@ -14,9 +14,15 @@ from sympy.combinatorics import (
     DihedralGroup,
 )
 
-from finalg.sympy_interop import from_sympy_permutation_group
+from finalg.sympy_interop import from_sympy_permutation_group, to_sympy_permutation_group
 from finalg.group import Group
-from finalg import generate_symmetric_group, generate_dihedral_group, generate_cyclic_group
+from finalg import (
+    generate_symmetric_group,
+    generate_dihedral_group,
+    generate_cyclic_group,
+    make_finite_algebra,
+    examples,
+)
 
 
 class TestFromSympyPermutationGroup(TestCase):
@@ -115,3 +121,84 @@ class TestFromSympyPermutationGroup(TestCase):
         alg, _ = from_sympy_permutation_group(SymmetricGroup(6))
         self.assertEqual(alg.order, 720)
         self.assertTrue(alg.has_identity())
+
+
+def _exact_homomorphism(finalg_group, perm_of):
+    """True iff perm_of[a] * perm_of[b] (SymPy composition) == perm_of[a*b]
+    (finalg's own op) for every pair -- i.e. a genuine, order-preserving
+    embedding, not merely an isomorphism up to relabeling."""
+    elements = list(finalg_group.elements)
+    return all(
+        perm_of[a] * perm_of[b] == perm_of[finalg_group.op(a, b)]
+        for a in elements
+        for b in elements
+    )
+
+
+class TestToSympyPermutationGroup(TestCase):
+
+    def test_rejects_non_group(self):
+        rps = make_finite_algebra('RPS', 'Rock Paper Scissors',
+                                   ['r', 'p', 's'], [[0, 1, 0], [1, 1, 2], [0, 2, 2]])
+        with self.assertRaises(TypeError):
+            to_sympy_permutation_group(rps)
+
+    def test_rejects_quasigroup(self):
+        latin = examples[17]
+        with self.assertRaises(TypeError):
+            to_sympy_permutation_group(latin)
+
+    def test_rejects_ring_and_field(self):
+        f4 = examples[9]  # Field with 4 elements -- a subclass of Group via +
+        with self.assertRaises(TypeError):
+            to_sympy_permutation_group(f4)
+
+    def test_returns_a_sympy_permutation_group(self):
+        z4 = generate_cyclic_group(4)
+        sympy_group, _ = to_sympy_permutation_group(z4)
+        self.assertIsInstance(sympy_group, PermutationGroup)
+
+    def test_order_matches(self):
+        for grp in [generate_symmetric_group(3), generate_dihedral_group(4)[0],
+                    generate_cyclic_group(6), examples[13]]:  # Q8
+            with self.subTest(grp=grp.name):
+                sympy_group, _ = to_sympy_permutation_group(grp)
+                self.assertEqual(sympy_group.order(), grp.order)
+
+    def test_elem_dict_covers_every_element_not_just_generators(self):
+        s3 = generate_symmetric_group(3)
+        _, perm_of = to_sympy_permutation_group(s3)
+        self.assertEqual(set(perm_of.keys()), set(s3.elements))
+        for perm in perm_of.values():
+            self.assertIsInstance(perm, Permutation)
+
+    def test_exact_homomorphism_abelian(self):
+        z6 = generate_cyclic_group(6)
+        _, perm_of = to_sympy_permutation_group(z6)
+        self.assertTrue(_exact_homomorphism(z6, perm_of))
+
+    def test_exact_homomorphism_nonabelian(self):
+        # This is the case that actually distinguishes left- from
+        # right-regular representation under SymPy's composition convention.
+        s3 = generate_symmetric_group(3)
+        _, perm_of = to_sympy_permutation_group(s3)
+        self.assertTrue(_exact_homomorphism(s3, perm_of))
+
+    def test_exact_homomorphism_quaternion(self):
+        q8 = examples[13]
+        _, perm_of = to_sympy_permutation_group(q8)
+        self.assertTrue(_exact_homomorphism(q8, perm_of))
+
+    def test_round_trip_is_isomorphic(self):
+        s4 = generate_symmetric_group(4)
+        sympy_group, _ = to_sympy_permutation_group(s4)
+        back, _ = from_sympy_permutation_group(sympy_group)
+        self.assertTrue(back.fast_isomorphic(s4))
+
+    def test_order_60_group_converts_quickly(self):
+        # Mainly a regression guard against reintroducing a dependency on
+        # finding a *minimal* generating set, which is its own (slow) search.
+        a5 = examples[15]
+        sympy_group, _ = to_sympy_permutation_group(a5)
+        self.assertEqual(sympy_group.order(), 60)
+

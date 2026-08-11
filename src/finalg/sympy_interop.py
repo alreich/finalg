@@ -2,16 +2,29 @@
 #   sympy_interop
 # ================================================================
 #
-# A converter that pulls a group definition out of SymPy's
-# combinatorics library (sympy.combinatorics.PermutationGroup) and
-# turns it into a finalg Group, so that the very large catalog of
-# groups SymPy already knows how to build or compute (symmetric,
-# alternating, dihedral, cyclic, direct products, derived/commutator
-# subgroups, Sylow subgroups, point/setwise stabilizers, and any
-# custom group built from a handful of permutation generators) can be
-# brought into finalg without hand-authoring a Cayley table.
+# Two converters between finalg and sympy.combinatorics, in opposite
+# directions:
 #
-# Three things make this fast rather than merely correct:
+#   from_sympy_permutation_group -- pulls a group definition out of
+#     SymPy (sympy.combinatorics.PermutationGroup) and turns it into a
+#     finalg Group, so that the very large catalog of groups SymPy
+#     already knows how to build or compute (symmetric, alternating,
+#     dihedral, cyclic, direct products, derived/commutator subgroups,
+#     Sylow subgroups, point/setwise stabilizers, and any custom group
+#     built from a handful of permutation generators) can be brought
+#     into finalg without hand-authoring a Cayley table.
+#
+#   to_sympy_permutation_group -- goes the other way: embeds a finalg
+#     Group into SymPy as a PermutationGroup via its regular
+#     representation (Cayley's theorem), so that a group built or
+#     derived inside finalg (by hand, from JSON, as a quotient or
+#     subalgebra, etc.) can make use of SymPy's own group-theoretic
+#     toolkit. This direction only makes sense for Group -- see that
+#     function's docstring for why it doesn't extend to finalg's other
+#     algebra types.
+#
+# Three things make from_sympy_permutation_group fast rather than
+# merely correct:
 #
 # 1. The group's elements are enumerated by SymPy itself
 #    (`PermutationGroup.generate()`), which uses SymPy's own (much
@@ -47,6 +60,7 @@
 from sympy.combinatorics import Permutation, PermutationGroup
 
 from finalg.group import Group
+from finalg.ring import Ring
 from finalg.permutation import Perm as FinalgPerm
 
 
@@ -161,3 +175,115 @@ def from_sympy_permutation_group(sympy_group, name=None, description=None, verif
     elem_dict = dict(zip(names, sympy_perms))
 
     return algebra, elem_dict
+
+
+def to_sympy_permutation_group(finalg_group, verify_order=True):
+    """Convert a finalg Group into a sympy.combinatorics.PermutationGroup, via its
+    regular representation: Cayley's theorem guarantees that every finite group of
+    order n embeds faithfully into Sym(n) this way.
+
+    Concretely, each element g is mapped to the permutation R_g(x) = x * g ("right
+    multiplication by g") of the group's own n elements. Associativity of finalg's
+    operation makes g -> R_g a homomorphism; because a Group has inverses, it's also
+    injective, so the resulting map is a faithful embedding, and the SymPy group's
+    own multiplication reproduces this group's table exactly (not just up to
+    isomorphism -- literally: for any a, b in the group, R_a * R_b (SymPy
+    composition) equals R_(a*b)).
+
+    Note it's *right*, not left, multiplication that works here: SymPy composes
+    permutations as (p*q)(i) = q(p(i)), and under that convention the left-regular
+    representation turns out to be an anti-homomorphism (it would silently
+    reproduce the opposite group's table instead).
+
+    This only makes sense for a genuine finalg Group -- the argument only being a
+    single operation with inverses is exactly what makes the embedding a
+    homomorphism in the first place. It does not extend to Quasigroup/Loop
+    (cancellative, but not associative, so the regular-representation map isn't a
+    homomorphism at all and composing the resulting permutations would not
+    reproduce the loop's actual product), to Magma/Semigroup in general (without
+    cancellation, "multiply by g" need not even be a bijection), or to Ring/Field
+    (two operations; SymPy's combinatorics module models single-operation
+    permutation groups).
+
+    Every element's permutation is computed (not just a generating set -- SymPy's
+    PermutationGroup handles redundant generators fine, and finding a genuinely
+    minimal generating set is its own, unrelated combinatorial search), so the
+    returned dict covers every element, and the caller can look up the permutation
+    for any specific one.
+
+    Parameters
+    ----------
+    finalg_group : finalg.group.Group
+        The group to convert.
+    verify_order : bool, default True
+        If True (the default -- this check is cheap, unlike the O(n^3) associativity
+        check `from_sympy_permutation_group`'s `verify` guards), confirms that the
+        SymPy group SymPy computes from the chosen generators has the same order as
+        `finalg_group`, and raises ValueError if not.
+
+    Returns
+    -------
+    (sympy_group, elem_dict)
+        sympy_group : the resulting sympy.combinatorics.PermutationGroup.
+        elem_dict : dict mapping each of finalg_group's element names to its
+            corresponding sympy Permutation (i.e. the full regular representation,
+            not just the generators).
+
+    Raises
+    ------
+    TypeError
+        If `finalg_group` isn't a finalg Group.
+    ValueError
+        If `verify_order=True` and the SymPy group's order doesn't match
+        finalg_group's order -- this would indicate a bug rather than a normal
+        failure mode, since this embedding is always faithful for a genuine group.
+    """
+    if not isinstance(finalg_group, Group):
+        raise TypeError(
+            f"Expected a finalg Group, got {type(finalg_group).__name__}. The regular-"
+            f"representation embedding used here relies on the operation being associative "
+            f"with inverses, which is exactly what makes a finalg algebra a Group; it isn't "
+            f"meaningful for non-associative structures (Magma, Quasigroup, Loop) or "
+            f"algebras with two operations (Ring, Field)."
+        )
+    if isinstance(finalg_group, Ring):  # Ring (and its subclass Field) extend Group via +
+        raise TypeError(
+            f"{finalg_group.name} is a {type(finalg_group).__name__}, which has two operations "
+            f"(addition and multiplication). Converting it as though it were a plain Group would "
+            f"silently embed only its additive structure -- self.op -- and throw away multiplication "
+            f"entirely, which would be misleading rather than merely partial. If you want the "
+            f"additive group on its own, that's unambiguous, so build it directly instead, e.g. "
+            f"to_sympy_permutation_group(make_finite_algebra(finalg_group.name, finalg_group.description, "
+            f"finalg_group.elements, finalg_group.table.tolist())). If you want the multiplicative "
+            f"structure, use finalg_group.units_subgroup() first (its elements form a genuine Group "
+            f"under multiplication) and convert that."
+        )
+
+    elements = list(finalg_group.elements)
+    n = len(elements)
+    index_of = {e: i for i, e in enumerate(elements)}
+
+    # Full right-regular representation: R_g(x) = x * g, for every element g (not
+    # just generators), so callers can look up any specific element's permutation.
+    perm_of = {
+        g: Permutation([index_of[finalg_group.op(x, g)] for x in elements])
+        for g in elements
+    }
+
+    # SymPy's PermutationGroup doesn't need a *minimal* generating set to compute
+    # correctly or efficiently (Schreier-Sims handles redundant generators just
+    # fine), and finding a genuinely minimal one via finalg's own
+    # `_smallest_generating_set` can itself be slow for larger groups -- it's a
+    # combinatorial search unrelated to anything this function otherwise needs.
+    # Since every element's permutation is already on hand, just hand SymPy all
+    # of them.
+    sympy_group = PermutationGroup(list(perm_of.values()))
+
+    if verify_order and sympy_group.order() != n:
+        raise ValueError(
+            f"The SymPy group generated from {finalg_group.name}'s generators has order "
+            f"{sympy_group.order()}, but {finalg_group.name} has order {n}. For a genuine "
+            f"Group this should never happen and would indicate a bug."
+        )
+
+    return sympy_group, perm_of

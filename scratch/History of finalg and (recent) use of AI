@@ -1,0 +1,14 @@
+History of finalg and (recent) use of AI
+
+The 'finalg' is a reorganized version of my 'abstract_algebra' repository, which has now be archived. The primary change I made to 'abstract_algebra', that resulted in 'finalg', was to break out the single, monolithic source file, 'finite_algebras.py', into many smaller files: group.py, ring.py, etc. There were other changes that I can no longer recall. I'm a mathematician, not a programmer, and I found it daunting to make so many changes in-place, so I did all of it in a new repo, 'finalg'. By the way, I'm also not an algebraist. My area is mathematical statistics, but I'm facinated by algebra.
+
+More recently, I've experimented with using AI to assist me with writing code. That's not something I want to do a lot of, but there were a couple of areas that vexed me, associativity and isomorphisms. I used brute-force algorithms for both and they were slow. So, I used Claude.AI to do the following:
+
+* Rewrite my methods: 'Magma.fast_isomorphic', 'CayleyTable.is_associative', & 'Group.solvable'
+* Sped up my implementation of 'about_subalgebras', including the 'binary_operation' class.
+* Use my Jupyter notebook examples in 'abstract_algebra/notebooks' to write many new unittests
+* Write two interoperability methods for converting my algebras to/from SymPy algebras
+* Help organizing the structure of the 'finalg' repo
+* Rewrite my 'README.md' for the 'finalg' repo
+
+Details of some of my interactions with Claude.AI can be found in 'CHANGELOG.md' and in the Jupyter notebooks (.ipynb) in 'scratch/'.

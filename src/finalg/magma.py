@@ -363,26 +363,76 @@ class Magma(FiniteAlgebra):
         else:
             return list(result)
 
-    def closed_subsets_of_elements(self, divisors_only, include_inverses):
+    # def closed_subsets_of_elements(self, divisors_only, include_inverses):
+    #     """Return all unique, closed, proper subsets of the algebra's elements.
+    #     This returns a list of lists. Each list represents the elements of a subalgebra.
+    #     If divisors_only is True, then only subalgebras of orders that are divisors of
+    #     self will be examined."""
+    #     closed = set()  # Build the result as a set of sets to avoid duplicates
+    #     all_elements = self.elements
+    #     n = len(all_elements)
+    #     if divisors_only:
+    #         range_ = divisors(n, non_trivial=True)
+    #     else:
+    #         range_ = range(2, n - 1)
+    #     for i in range_:
+    #         # Look at all combinations of elements: pairs, triples, quadruples, etc.
+    #         for combo in it.combinations(all_elements, i):
+    #             # Freezing is required to add a set to a set
+    #             clo = frozenset(self.closure(list(combo), include_inverses))
+    #             if len(clo) < n:  # Don't include closures consisting of all elements
+    #                 closed.add(clo)
+    #     return list(map(lambda x: list(x), closed))
+
+    def closed_subsets_of_elements(self, divisors_only=True, include_inverses=True):
         """Return all unique, closed, proper subsets of the algebra's elements.
         This returns a list of lists. Each list represents the elements of a subalgebra.
-        If divisors_only is True, then only subalgebras of orders that are divisors of
-        self will be examined."""
-        closed = set()  # Build the result as a set of sets to avoid duplicates
+        If divisors_only is True, only subalgebras of orders that are divisors of self's
+        order are included in the result.
+
+        Instead of testing every combination of elements of every candidate size (which is
+        combinatorially infeasible -- e.g. C(60, 30) ~ 1.2*10^17 for an order-60 algebra
+        like A5), this builds up the lattice of closed subsets from the bottom: starting
+        from the closure of each individual element, it repeatedly extends every closed
+        set found so far by one more element and re-closes, discovering every closed proper
+        subset that way. This works because any closed subset H containing elements
+        g1, ..., gk is reachable by adding those elements to the empty set one at a time and
+        closing at each step -- closure({g1}) subseteq closure({g1,g2}) subseteq ... subseteq H
+        -- and every intermediate closure along the way is itself closed and contained in H,
+        so it is one of the sets this search discovers on the way to finding H.
+
+        Reference: this is the "cyclic extension" method for building a subgroup lattice;
+        see J. Neubuser, "Untersuchungen des Untergruppenverbandes endlicher Gruppen auf
+        einer programmgesteuerten Rechenanlage," Numerische Mathematik 2 (1960): 280-292,
+        and D. Holt, B. Eick, E. O'Brien, Handbook of Computational Group Theory, Chapman &
+        Hall/CRC, 2005 (subgroup lattice / cyclic extension algorithm).
+        """
         all_elements = self.elements
         n = len(all_elements)
+
+        known = set()
+        queue = []
+        for x in all_elements:
+            clo = frozenset(self.closure([x], include_inverses))
+            if len(clo) < n and clo not in known:
+                known.add(clo)
+                queue.append(clo)
+
+        while queue:
+            subset = queue.pop()
+            for g in all_elements:
+                if g in subset:
+                    continue
+                extended = frozenset(self.closure(list(subset) + [g], include_inverses))
+                if len(extended) < n and extended not in known:
+                    known.add(extended)
+                    queue.append(extended)
+
         if divisors_only:
-            range_ = divisors(n, non_trivial=True)
-        else:
-            range_ = range(2, n - 1)
-        for i in range_:
-            # Look at all combinations of elements: pairs, triples, quadruples, etc.
-            for combo in it.combinations(all_elements, i):
-                # Freezing is required to add a set to a set
-                clo = frozenset(self.closure(list(combo), include_inverses))
-                if len(clo) < n:  # Don't include closures consisting of all elements
-                    closed.add(clo)
-        return list(map(lambda x: list(x), closed))
+            allowed_sizes = set(divisors(n, non_trivial=True))
+            known = {s for s in known if len(s) in allowed_sizes}
+
+        return list(map(list, known))
 
     def subalgebra_from_elements(self, closed_subset_of_elements, name="No name", desc="No description"):
         """Return the algebra constructed from the given closed subset of elements."""

@@ -6,10 +6,47 @@
 
 from functools import reduce
 
+# def partition_into_isomorphic_lists(list_of_groups):
+#     """Partition the list of groups into sub-lists of groups that are isomorphic to each other.
+#     The purpose of this function is to operate on the proper subgroups of a group to determine
+#     the unique subgroups, up to isomorphism.
+#     """
+#     def iso_and_not_iso(gp, gps):
+#         """Partition the list of groups, gps, into two lists, those that are isomorphic to gp
+#         and those that are not."""
+#         iso_to_grp = []
+#         not_iso_to_grp = []
+#         for g in gps:
+#             if gp.fast_isomorphic(g):
+#                 iso_to_grp.append(g)
+#             else:
+#                 not_iso_to_grp.append(g)
+#         return iso_to_grp, not_iso_to_grp
+#
+#     def aux(result, remainder):
+#         """Recursively partition 'remainder' into lists that are isomorphic to its first member of the
+#         remainder list and those that are not.  Then, put those that are isomorphic to the first member
+#         into the 'result' list, and recurse on the remainder.
+#         """
+#         if len(remainder) == 0:
+#             return result
+#         else:
+#             first = remainder[0]
+#             rest = remainder
+#             iso_to_first, not_iso_to_first = iso_and_not_iso(first, rest)
+#             result.append(iso_to_first)
+#             return aux(result, not_iso_to_first)
+#
+#     return aux([], list_of_groups)
+
 def partition_into_isomorphic_lists(list_of_groups):
     """Partition the list of groups into sub-lists of groups that are isomorphic to each other.
     The purpose of this function is to operate on the proper subgroups of a group to determine
     the unique subgroups, up to isomorphism.
+
+    Uses 'fast_isomorphic' rather than the brute-force 'isomorphic', since the latter tries
+    every one of other.order! bijections and is intractable once subalgebra orders climb
+    past roughly 8-9 (e.g. the order-12 subgroups of A5).
     """
     def iso_and_not_iso(gp, gps):
         """Partition the list of groups, gps, into two lists, those that are isomorphic to gp
@@ -17,24 +54,22 @@ def partition_into_isomorphic_lists(list_of_groups):
         iso_to_grp = []
         not_iso_to_grp = []
         for g in gps:
-            if gp.isomorphic(g):
+            if gp.fast_isomorphic(g):
                 iso_to_grp.append(g)
             else:
                 not_iso_to_grp.append(g)
         return iso_to_grp, not_iso_to_grp
 
     def aux(result, remainder):
-        """Recursively partition 'remainder' into lists that are isomorphic to its first member of the
-        remainder list and those that are not.  Then, put those that are isomorphic to the first member
-        into the 'result' list, and recurse on the remainder.
-        """
+        """Recursively partition 'remainder' into lists that are isomorphic to its first member
+        and those that are not, then recurse on the remainder."""
         if len(remainder) == 0:
             return result
         else:
             first = remainder[0]
-            rest = remainder
+            rest = remainder[1:]  # was 'remainder', which wastefully compared 'first' to itself
             iso_to_first, not_iso_to_first = iso_and_not_iso(first, rest)
-            result.append(iso_to_first)
+            result.append([first] + iso_to_first)
             return aux(result, not_iso_to_first)
 
     return aux([], list_of_groups)
@@ -162,7 +197,7 @@ def find_isomorphic_subalgebra(algebra, partitions, verbose=False):
         if part[0].order == n :
             if verbose:
                 print(f"Checking: {part[0].name}")
-            iso = algebra.isomorphic(part[0])
+            iso = algebra.fast_isomorphic(part[0])
             if iso:
                 iso_grp = part[0]
                 break

@@ -72,6 +72,13 @@ def generate_symmetric_group(n: int, name: (str | None) =None, description: (str
     return make_finite_algebra(nm, desc, list(elem_dict.keys()), index_table)
 
 
+def generate_alternating_group(n: int, name: (str | None) =None, description: (str | None) =None,
+                               cyclic_form:bool =True):
+    """A convenience function for generating an alternating group. Under the hood, it simply calls
+    'generate_symmetric_group' with alternating=True."""
+    return generate_symmetric_group(n, name, description, alternating=True, cyclic_form=cyclic_form)
+
+
 def generate_powerset_group(n: int, name: (str | None) =None, description: (str | None) =None):
     """Generates a group on the powerset of {0, 1, 2, ..., n-1},
     where symmetric difference is the operator.

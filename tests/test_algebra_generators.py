@@ -15,7 +15,7 @@ from finalg.algebra_generators import (
     generate_algebra_mod_n,
     generate_nxn_matrix_algebra,
     generate_dihedral_group,
-    generate_algebra_from_element_dict,
+    generate_algebra_from_element_dict, generate_alternating_group,
 )
 from finalg.group import Group
 from finalg.ring import Ring
@@ -60,6 +60,11 @@ class TestGenerateSymmetricGroup(TestCase):
 
     def test_alternating_group(self):
         a3 = generate_symmetric_group(3, alternating=True)
+        self.assertEqual(a3.order, 3)
+        self.assertEqual(a3.name, 'A3')
+
+    def test_alternating_group_second_way(self):
+        a3 = generate_alternating_group(3)
         self.assertEqual(a3.order, 3)
         self.assertEqual(a3.name, 'A3')
 

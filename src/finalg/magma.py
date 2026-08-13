@@ -7,6 +7,7 @@ from collections import Counter
 import numpy as np
 import networkx as nx
 from pprint import pprint
+import matplotlib
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 
@@ -651,7 +652,8 @@ class Magma(FiniteAlgebra):
             node_size: int = 800,
             font_size: int = 12,
             figsize: tuple[int, int] = (9, 7),
-    ) -> None:
+            show: bool = True,
+    ) -> plt.Figure:
         """
         Draw the Cayley diagram of `group` with respect to `generators`.
 
@@ -664,6 +666,18 @@ class Magma(FiniteAlgebra):
         font_size  : label font size.
         figsize    : figure size in inches.
         legend_loc : location of legend in drawing
+        show       : if True (default), display the figure via `plt.show()`,
+                     but only when running under an interactive Matplotlib
+                     backend. Under a non-interactive backend (e.g. "Agg",
+                     as used by automated tests), `plt.show()` is skipped to
+                     avoid the "FigureCanvasAgg is non-interactive" UserWarning.
+                     Set to False to always skip displaying the figure.
+
+        Returns
+        -------
+        matplotlib.figure.Figure
+            The created figure, so callers (including tests) can inspect it
+            without needing the figure to be shown.
         """
 
         # Color palette for up to 8 generators
@@ -744,7 +758,16 @@ class Magma(FiniteAlgebra):
             framealpha=0.85,
         )
         plt.tight_layout()
-        plt.show()
+
+        # Only pop up the figure under an interactive backend, and only if the
+        # caller hasn't opted out. Under a non-interactive backend (e.g. "Agg",
+        # as set by the test suite), plt.show() would just emit
+        # "FigureCanvasAgg is non-interactive, and thus cannot be shown", so
+        # skip it there.
+        if show and matplotlib.get_backend().lower() != "agg":
+            plt.show()
+
+        return fig
 
     # This 'about' method differs from the one in Groups in that it does not print out
     # as much detailed information about elements.

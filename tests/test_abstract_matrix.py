@@ -86,6 +86,9 @@ class TestAbstractMatrix(TestCase):
         mult_tbl = [[0, 0, 0], [0, 0, 0], [0, 0, 0]]  # trivial mult: no identity
         zero_mult_ring = Ring('ZeroMultRing', 'desc', ['0', '1', '2'], add_tbl, mult_tbl)
         self.assertFalse(zero_mult_ring.has_mult_identity())
+        # zero_mult_ring has no multiplicative identity element,
+        # so an identity matrix cannot be constructed.
+        # Hence, None is returned.
         self.assertIsNone(mat.AbstractMatrix.identity(2, zero_mult_ring))
 
     def test_random_shape_and_membership(self):

@@ -36,7 +36,7 @@ class AbstractMatrix:
                 ids[i, i] = ring.one
             return ids
         else:
-            print(f"{ring.name} has no unit element for multiplication")
+            # print(f"{ring.name} has no unit element for multiplication")
             return None
 
     @classmethod

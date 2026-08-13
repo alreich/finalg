@@ -438,14 +438,16 @@ class TestCayleyGraphAndDiagram(TestCase):
     def test_draw_cayley_diagram_smoke(self):
         v4 = make_v4()
         try:
-            v4.draw_cayley_diagram()
+            fig = v4.draw_cayley_diagram(show=False)
+            self.assertIsInstance(fig, plt.Figure)
         finally:
             plt.close('all')
 
     def test_draw_cayley_diagram_with_explicit_generators_and_layout(self):
         v4 = make_v4()
         try:
-            v4.draw_cayley_diagram(generators=['h', 'v'], layout='circular')
+            fig = v4.draw_cayley_diagram(generators=['h', 'v'], layout='circular', show=False)
+            self.assertIsInstance(fig, plt.Figure)
         finally:
             plt.close('all')
 

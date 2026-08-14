@@ -92,10 +92,16 @@ def powerset(iterable):
 #         print(f"  {u} -> {v} : {data}")
 
 
+# def cayley_graph_to_json(cayley_graph):
+#     """Uses NetworkX to return graph in node-link format that is suitable
+#     for JSON serialization and use in JavaScript documents."""
+#     return nx.node_link_data(cayley_graph)
+
+
 def cayley_graph_to_json(cayley_graph):
     """Uses NetworkX to return graph in node-link format that is suitable
     for JSON serialization and use in JavaScript documents."""
-    return nx.node_link_data(cayley_graph)
+    return nx.node_link_data(cayley_graph, edges="edges")
 
 
 def make_table_from_xml(table_string):

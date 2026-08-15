@@ -224,8 +224,8 @@ class Ring(Group):
         return self._element_pairs_where_table_equals(self.mult_table, elem_name)
 
     def zero_divisor_pairs(self):
-        """Return a list of pairs of elements, neither one of which is zero, but whose
-        product is zero.
+        """Return a list of ordered pairs of elements, neither one of which is zero,
+        but whose product is zero.
         """
         zero_product_pairs = self.element_pairs_where_product_equals(self.identity)
         # return [pair for pair in zero_product_pairs if not self.identity in pair]

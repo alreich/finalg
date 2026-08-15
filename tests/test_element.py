@@ -29,7 +29,7 @@ class TestElementConstruction(TestCase):
     def test_str_and_repr(self):
         e = Element('2', self.z4)
         self.assertEqual(str(e), '2')
-        self.assertEqual(repr(e), '<Z4:2>')
+        self.assertEqual(repr(e), '2')
 
 
 class TestElementArithmeticOnGroup(TestCase):

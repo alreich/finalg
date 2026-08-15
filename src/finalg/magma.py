@@ -771,7 +771,7 @@ class Magma(FiniteAlgebra):
 
     # This 'about' method differs from the one in Groups in that it does not print out
     # as much detailed information about elements.
-    # TODO: Combine the 'about' method, below, with the one in Groups.
+    # TODO: Combine/Unify all about methods so that they call the about method in Cayley table
     def about(self, max_size=12, max_gens=2, use_table_names=False, show_tables=True,
               show_elements=True, show_generators=False):
         """Prints out information about the algebra. Tables larger than

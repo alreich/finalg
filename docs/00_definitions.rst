@@ -115,37 +115,38 @@ The following list of algebraic structures is ordered such that each
 successive structure builds on a previous one. The class hierarchy of
 the ``finite_algebra`` module is modeled on this progression.
 
--  **Magma** – :math:`\langle S, \circ \rangle`, where :math:`S` is a
-   set and :math:`\circ` is a closed binary operation,
-   :math:`\circ: S \times S \to S`
+- **Magma** – :math:`\langle S, \circ \rangle`, where :math:`S` is a set
+  and :math:`\circ` is a closed binary operation,
+  :math:`\circ: S \times S \to S`
 
--  **Quasigroup** - a Magma where for each :math:`a, b \in S`,
-   :math:`\exists` unique :math:`x, y \in S` such that
-   :math:`a \circ x = y \circ a = b` :math:`^*`
+- **Quasigroup** - a Magma where for each :math:`a, b \in S`,
+  :math:`\exists` unique :math:`x, y \in S` such that
+  :math:`a \circ x = y \circ a = b` :math:`^*`
 
--  **Loop** - a Quasigroup with identity element:
-   :math:`\exists \ e \in S`, such that, for all
-   :math:`a \in S, a \circ e = e \circ a = a`
+- **Loop** - a Quasigroup with identity element:
+  :math:`\exists \ e \in S`, such that, for all
+  :math:`a \in S, a \circ e = e \circ a = a`
 
--  **Semigroup** – an associative Magma:
-   :math:`\forall a,b,c \in S \Rightarrow a \circ (b \circ c) = (a \circ b) \circ c`
+- **Semigroup** – an associative Magma:
+  :math:`\forall a,b,c \in S \Rightarrow a \circ (b \circ c) = (a \circ b) \circ c`
 
--  **Monoid** – a Semigroup with identity element:
-   :math:`\exists \ e \in S`, such that, for all
-   :math:`a \in S, a \circ e = e \circ a = a`
+- **Monoid** – a Semigroup with identity element:
+  :math:`\exists \ e \in S`, such that, for all
+  :math:`a \in S, a \circ e = e \circ a = a`
 
--  **Group** – a Monoid with inverse elements:
-   :math:`\forall a \in S, \exists \ a^{-1} \in S`, such that,
-   :math:`a \circ a^{-1} = a^{-1} \circ a = e`
+- **Group** – a Monoid with inverse elements:
+  :math:`\forall a \in S, \exists \ a^{-1} \in S`, such that,
+  :math:`a \circ a^{-1} = a^{-1}
+  \circ a = e`
 
--  **Ring** – :math:`\langle S, +, \cdot \rangle`, where
-   :math:`\langle S, + \rangle` is an abelian\ :math:`^\dagger` Group,
-   :math:`\langle S, \cdot \rangle` is a Semigroup, and :math:`\cdot`
-   distributes\ :math:`^\ddagger` over :math:`+`
+- **Ring** – :math:`\langle S, +, \cdot \rangle`, where
+  :math:`\langle S, + \rangle` is an abelian\ :math:`^\dagger` Group,
+  :math:`\langle S, \cdot \rangle` is a Semigroup, and :math:`\cdot`
+  distributes\ :math:`^\ddagger` over :math:`+`
 
--  **Field** – a Ring :math:`\langle S, +, \cdot \rangle`, where
-   :math:`\langle S\setminus{\{0\}}, \cdot \rangle` is an abelian
-   Group\ :math:`^{\dagger\dagger}`
+- **Field** – a Ring :math:`\langle S, +, \cdot \rangle`, where
+  :math:`\langle S\setminus{\{0\}}, \cdot \rangle` is an abelian
+  Group\ :math:`^{\dagger\dagger}`
 
 :math:`^*` The property possessed by the Quasigroup is referred to in
 multiple ways: *division*, or *latin square*, or *cancellation*
@@ -181,11 +182,10 @@ and, if a multiplicative identity exists, :math:`1` for :math:`\cdot`.
 
 Regarding a **Ring’s** Semigroup, :math:`\langle S, \cdot \rangle`:
 
--  if the Semigroup is abelian, then the Ring is called a “*commutative
-   Ring*”
--  if the Semigroup is actually a Monoid (i.e., has an identity
-   element), then the Ring is called a “*unit Ring*” or “*Ring with
-   identity*”
+- if the Semigroup is abelian, then the Ring is called a “*commutative
+  Ring*”
+- if the Semigroup is actually a Monoid (i.e., has an identity element),
+  then the Ring is called a “*unit Ring*” or “*Ring with identity*”
 
 For examples, see the sections **“Groups, Monoids, Semigroups, &
 Magmas”** and **“Rings and Fields”**.
@@ -206,17 +206,16 @@ elements :math:`a,b,x \in S`.
 
 Consider the assumptions required to solve the equation for :math:`x`:
 
--  First, assume the group’s binary operation is closed; that is,
-   :math:`a, b \in S \Rightarrow a \circ b \in S`
--  Assume every element has an inverse; so, multiplying :math:`a^{-1}`
-   on both sides yields
-   :math:`a^{-1} \circ (a \circ x) = a^{-1} \circ b`
--  Assume the group is associative; therefore
-   :math:`(a^{-1} \circ a) \circ x = a^{-1} \circ b`
--  Assume the group has an identity element, :math:`e`; therefore
-   :math:`e \circ x = a^{-1} \circ b`
--  And finally, since :math:`e` is an identity element,
-   :math:`e \circ x = x \Rightarrow \boxed{x = a^{-1} \circ b}`
+- First, assume the group’s binary operation is closed; that is,
+  :math:`a, b \in S \Rightarrow a \circ b \in S`
+- Assume every element has an inverse; so, multiplying :math:`a^{-1}` on
+  both sides yields :math:`a^{-1} \circ (a \circ x) = a^{-1} \circ b`
+- Assume the group is associative; therefore
+  :math:`(a^{-1} \circ a) \circ x = a^{-1} \circ b`
+- Assume the group has an identity element, :math:`e`; therefore
+  :math:`e \circ x = a^{-1} \circ b`
+- And finally, since :math:`e` is an identity element,
+  :math:`e \circ x = x \Rightarrow \boxed{x = a^{-1} \circ b}`
 
 The assumptions made above are precisely those that make up the
 definition of a Group.
@@ -234,11 +233,11 @@ with their own set of elements, called *scalars* and *vectors*.
 A **Vector Space**, :math:`\mathscr{V} = \langle G, F, \circ \rangle`,
 consists of the following:
 
--  an **abelian Group**, :math:`G = \langle V, \oplus \rangle` (i.e.,
-   the *“vectors”*)
--  a **field**, :math:`F = \langle S, +, \cdot \rangle` (i.e., the
-   *“scalars”*)
--  and a **binary operator**, :math:`\circ : S \times V \to V`
+- an **abelian Group**, :math:`G = \langle V, \oplus \rangle` (i.e., the
+  *“vectors”*)
+- a **field**, :math:`F = \langle S, +, \cdot \rangle` (i.e., the
+  *“scalars”*)
+- and a **binary operator**, :math:`\circ : S \times V \to V`
 
 where the following conditions hold:
 
@@ -308,21 +307,21 @@ If :math:`G = \langle S, + \rangle` and
 **direct product**, denoted by :math:`G \times H`, is also a Group,
 where
 
--  :math:`G \times H \equiv \langle U, \bullet \rangle`
--  :math:`U = \{(g,h): g \in S, h \in T\}`
--  :math:`(g, h) \bullet (g', h') = (g + g', h \oplus h')` for all
-   :math:`(g, h), (g', h') \in U`
+- :math:`G \times H \equiv \langle U, \bullet \rangle`
+- :math:`U = \{(g,h): g \in S, h \in T\}`
+- :math:`(g, h) \bullet (g', h') = (g + g', h \oplus h')` for all
+  :math:`(g, h), (g', h') \in U`
 
 If :math:`R_1 = \langle S, +, \cdot \rangle` and
 :math:`R_2 = \langle T, \oplus, \odot \rangle` are two Rings, then their
 **direct product**, denoted by :math:`R_1 \times R_2`, is also a Ring,
 where
 
--  :math:`R_1 \times R_2 \equiv \langle U, \circ, \bullet \rangle`
--  :math:`U = \{(s, t): s \in S, t \in T\}`
--  :math:`(s, t) \circ (s', t') = (s + s', t \oplus t')`, for all
-   :math:`(s, t), (s', t') \in U`
--  :math:`(s, t) \bullet (s', t') = (s \cdot s', t \odot t')`
+- :math:`R_1 \times R_2 \equiv \langle U, \circ, \bullet \rangle`
+- :math:`U = \{(s, t): s \in S, t \in T\}`
+- :math:`(s, t) \circ (s', t') = (s + s', t \oplus t')`, for all
+  :math:`(s, t), (s', t') \in U`
+- :math:`(s, t) \bullet (s', t') = (s \cdot s', t \odot t')`
 
 The only requirement needed to form a direct product is that there be
 two finite algebras, each with its own set of elements and binary
@@ -373,10 +372,10 @@ will also be true for Semigroups, but not necessarily true for Magmas.
 
 There are two Magma methods related to the center:
 
--  ``center`` returns the center of a Magma, or it returns an empty list
-   if the center is empty
--  ``center_algebra`` returns the algebra defined by the center, if the
-   center exists and is closed, otherwise it returns ``None``.
+- ``center`` returns the center of a Magma, or it returns an empty list
+  if the center is empty
+- ``center_algebra`` returns the algebra defined by the center, if the
+  center exists and is closed, otherwise it returns ``None``.
 
 Commutators
 ~~~~~~~~~~~
@@ -408,11 +407,11 @@ The set of all commutators of a Group is a subgroup, and is called the
 
 The following methods exist for ``Group`` instances:
 
--  ``commutator``, for two elements, :math:`a,b`, this method will
-   return :math:`[a,b]`
--  ``commutators``, will return a list of all the commutators of a Group
--  ``commutator_subalgebra``, will return the commutator subgroup of a
-   Group
+- ``commutator``, for two elements, :math:`a,b`, this method will return
+  :math:`[a,b]`
+- ``commutators``, will return a list of all the commutators of a Group
+- ``commutator_subalgebra``, will return the commutator subgroup of a
+  Group
 
 For a Ring, :math:`R = \langle S, +, \cdot \rangle`, the elements under
 addition, :math:`\langle S, + \rangle` are, by definition, an abelian
@@ -484,8 +483,8 @@ Howie <http://www.thebookshelf.auckland.ac.nz/docs/Maths/PDF2/mathschron016-001.
 
 Here are some Semigroup methods related to regularity:
 
--  ``is_regular`` returns True or False, depending on whether the
-   Semigroup is regular
--  ``weak_inverses`` returns a dictionary of weak inverses, where each
-   key is one of the algebra’s elements and its value is a list of its
-   weak inverses.
+- ``is_regular`` returns True or False, depending on whether the
+  Semigroup is regular
+- ``weak_inverses`` returns a dictionary of weak inverses, where each
+  key is one of the algebra’s elements and its value is a list of its
+  weak inverses.

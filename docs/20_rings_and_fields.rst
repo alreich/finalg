@@ -9,72 +9,58 @@ these algebraic structures
 Imports
 -------
 
-The modules, json and os, are required for serialization.
+The following functions are imported below:
+
+- make_finite_algebra – RECOMMENDED way to create any algebra using the
+  internal rep. described below
+- generate_powerset_ring – An automated way to create a finite ``Ring``
+  of order, :math:`2^n`.
+- generate_algebra_mod_n – An automated way to create a finite ``Ring``
+  \| ``Field`` of order :math:`n`. ``Field`` if :math:`n` is prime,
+  otherwise ``Ring``.
+- InfixNotation – A context manager that allows infix notation to be
+  used for abstract arithmetic
 
 .. code:: ipython3
 
-    >>> import json
-    >>> import os
-    
-    >>> import finalg as fa
+    >>> from finalg import make_finite_algebra, generate_powerset_ring,\
+    >>>                    generate_algebra_mod_n, InfixNotation
+    >>> import json  # Needed for (de)serialization of algebras
 
 
 .. parsed-literal::
 
+    Finite Algebras:
+      To see a listing of built-in example algebras, run finalg.examples.about()
+      To retrieve an example algebra, use finalg.examples[INDEX]
     
-    Loading examples...
-    
-    To retrieve an example, use finalg.examples[INDEX]
-    
-    ======================================================================
-                               Example Algebras
-    ----------------------------------------------------------------------
-      19 example algebras are available.
-      The INDEX is the first number on each line below:
-    ----------------------------------------------------------------------
-    0: A4 -- Alternating group on 4 letters (AKA Tetrahedral group)
-    1: D3 -- https://en.wikipedia.org/wiki/Dihedral_group_of_order_6
-    2: D4 -- Dihedral group on four vertices
-    3: Pinter29 -- Non-abelian group, p.29, 'A Book of Abstract Algebra' by Charles C. Pinter
-    4: RPS -- Rock, Paper, Scissors Magma
-    5: S3 -- Symmetric group on 3 letters
-    6: S3X -- Another version of the symmetric group on 3 letters
-    7: V4 -- Klein-4 group
-    8: Z4 -- Cyclic group of order 4
-    9: F4 -- Field with 4 elements (from Wikipedia)
-    10: mag_id -- Magma with Identity
-    11: Example 1.4.1 -- See: Groupoids and Smarandache Groupoids by W. B. Vasantha Kandasamy
-    12: Ex6 -- Example 6: http://www-groups.mcs.st-andrews.ac.uk/~john/MT4517/Lectures/L3.html
-    13: Q8 -- Quaternion Group
-    14: SD16 -- Semidihedral group of order 16
-    15: A5 -- Alternating group on 5 letters
-    16: F2 -- Field with 2 elements from paper: 236w06fields.pdf
-    17: Latin_Sqr -- Latin Square. A division algebra (AKA Quasigroup)
-    18: IP_Loop -- IP loop of small order
-    ======================================================================
 
+
+By the way, the message, above, always appears when ``finalg`` is
+imported. The built-in examples that it mentions were explored at the
+end of the previous section on Groups, etc.
 
 Internal Representation of Rings & Fields
 -----------------------------------------
 
-Internally, a finite algebra can take several different forms. For
+Internally, a ``FiniteAlgebra`` can take several different forms. For
 algebras that have only one set of elements and two binary operations,
-such as Rings and Fields, the internal representation is described
-below. The first four components are the same as for Groups, Monoids,
-etc. The only difference is the addition of **table2**. It defines Ring
+such as Rings and Fields, the internal representation is as shown below.
+The first four components are the same as for Groups, Monoids, etc. The
+only difference is the addition of **table2**. It defines Ring
 multiplication.
 
--  **name**: (``str``) A short name for the algebra;
--  **description**: (``str``) Any additional, useful information about
-   the algebra;
--  **elements**: (``list`` of ``str``) Names of the algebras’s elements.
--  **table**: (``list`` of ``list`` of ``int``) The algebra’s
-   multiplication table, where each list in the list represents a row of
-   the table, and each integer represents the position of an element in
-   ‘element_names’. Optionally, element names (``str``) may be used in
-   the table, rather than integers.
--  **table2**: Similar to *table*, above. Required when defining a Ring
-   or Field.
+- **name**: (``str``) A short name for the algebra;
+- **description**: (``str``) Any additional, useful information about
+  the algebra;
+- **elements**: (``list`` of ``str``) Names of the algebras’s elements.
+- **table**: (``list`` of ``list`` of ``int``) The algebra’s
+  multiplication table, where each list in the list represents a row of
+  the table, and each integer represents the position of an element in
+  ‘element_names’. Optionally, element names (``str``) may be used in
+  the table, rather than integers.
+- **table2**: Similar to *table*, above. Required when defining a Ring
+  or Field.
 
 Ring
 ----
@@ -99,14 +85,14 @@ Autogeneration of Rings & Fields
 There are several functions for autogenerating finite Rings and Fields
 of specified size:
 
--  ``generate_powerset_ring``: :math:`A+B \equiv A \bigtriangleup B` and
-   :math:`A \times B \equiv A \cap B`, where
-   :math:`A,B \in P(\{0, 1, ..., n-1\})`
--  ``generate_algebra_mod_n``: Combination of generate_cyclic_group
-   (:math:`+`) and generate_commutative_monoid (:math:`\times`)
+- ``generate_powerset_ring``: :math:`A+B \equiv A \bigtriangleup B` and
+  :math:`A \times B \equiv A \cap B`, where
+  :math:`A,B \in P(\{0, 1, ..., n-1\})`
+- ``generate_algebra_mod_n``: Combination of generate_cyclic_group
+  (:math:`+`) and generate_commutative_monoid (:math:`\times`)
 
-   -  If n is prime, then this will be a Field, otherwise it will be a
-      Ring
+  - If n is prime, then this will be a Field, otherwise it will be a
+    Ring
 
 Ring Based on Powerset of a Set
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -117,7 +103,7 @@ In this ring, *“addition”* is symmetric difference,
 
 .. code:: ipython3
 
-    >>> rng = fa.generate_powerset_ring(2)
+    >>> rng = generate_powerset_ring(2)
     
     >>> rng.about(use_table_names=True)
 
@@ -127,7 +113,7 @@ In this ring, *“addition”* is symmetric difference,
     
     ** Ring **
     Name: PSRing2
-    Instance ID: 4757352080
+    Instance ID: 5082982480
     Description: Autogenerated Ring on powerset of {0, 1} w/ symm. diff. (add) & intersection (mult)
     Order: 4
     Identity: '{}'
@@ -162,7 +148,7 @@ as follows:
 
 .. code:: ipython3
 
-    >>> rng.add_identity
+    rng.add_identity
 
 
 
@@ -175,7 +161,7 @@ as follows:
 
 .. code:: ipython3
 
-    >>> rng.mult_identity
+    rng.mult_identity
 
 
 
@@ -190,7 +176,7 @@ Or, perhaps more suggestively as follows:
 
 .. code:: ipython3
 
-    >>> rng.zero
+    rng.zero
 
 
 
@@ -203,7 +189,7 @@ Or, perhaps more suggestively as follows:
 
 .. code:: ipython3
 
-    >>> rng.one
+    rng.one
 
 
 
@@ -259,11 +245,12 @@ Ring “multiplication” using set notation:
 
 
 
-Or, using infix notation via the Algebra context:
+Or, using infix notation via the InfixNotation class (*context
+manager*):
 
 .. code:: ipython3
 
-    >>> with fa.InfixNotation(rng) as r:
+    >>> with InfixNotation(rng) as r:
     >>>     print(r['{1}'] + r['{0, 1}'])
     >>>     print(r['{1}'] * r['{0, 1}'])
 
@@ -303,12 +290,27 @@ The Ring just created has two zero divisors:
 
 
 
+To see which pairs of non-zero elements have a zero products (left and
+right), use the method, ``zero_divisor_pairs``.
+
+.. code:: ipython3
+
+    >>> rng.zero_divisor_pairs()
+
+
+
+
+.. parsed-literal::
+
+    [('{0}', '{1}'), ('{1}', '{0}')]
+
+
+
 Ring Based on 2x2 Matrices
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 See Example 6 in this reference:
 http://www-groups.mcs.st-andrews.ac.uk/~john/MT4517/Lectures/L3.html
-(Unfortunately, this link no longer works.)
 
 Example 6 is a Ring based on the following matrices, where arithmetic is
 done modulo 2:
@@ -327,7 +329,7 @@ done modulo 2:
                   ['0', '0', 'b', 'b'],
                   ['0', '0', 'c', 'c']]
     
-    >>> ex6 = fa.make_finite_algebra(
+    >>> ex6 = make_finite_algebra(
         'Ex6',
         'Example 6: http://www-groups.mcs.st-andrews.ac.uk/~john/MT4517/Lectures/L3.html',
         ['0', 'a', 'b', 'c'],
@@ -361,7 +363,7 @@ done modulo 2:
     
     ** Ring **
     Name: Ex6
-    Instance ID: 4757352720
+    Instance ID: 5082984400
     Description: Example 6: http://www-groups.mcs.st-andrews.ac.uk/~john/MT4517/Lectures/L3.html
     Order: 4
     Identity: '0'
@@ -438,7 +440,7 @@ expected:
     
     ** Group **
     Name: Ex6.Add
-    Instance ID: 4724284272
+    Instance ID: 5083164320
     Description: Additive-only portion of Ex6
     Order: 4
     Identity: '0'
@@ -458,7 +460,7 @@ expected:
 
 .. parsed-literal::
 
-    '<Group:Ex6.Add, ID:4724284272>'
+    '<Group:Ex6.Add, ID:5083164320>'
 
 
 
@@ -491,15 +493,20 @@ below:
 
 .. code:: ipython3
 
-    >>> help(fa.generate_algebra_mod_n)
+    help(generate_algebra_mod_n)
 
 
 .. parsed-literal::
 
     Help on function generate_algebra_mod_n in module finalg.algebra_generators:
     
-    generate_algebra_mod_n(n, elem_name='', name=None, description=None)
-        Generate a Ring (or Field) based on integer addition and multiplication modulo n.
+    generate_algebra_mod_n(
+        n: int,
+        elem_name: str = '',
+        name: str | None = None,
+        description: str | None = None
+    )
+        Generate a ring (or field) based on integer addition and multiplication modulo n.
         If n is prime, then result will be a Field, otherwise it will be a Ring.
     
 
@@ -508,7 +515,7 @@ Here’s an example:
 
 .. code:: ipython3
 
-    >>> r6 = fa.generate_algebra_mod_n(6)
+    >>> r6 = generate_algebra_mod_n(6)
     >>> r6.about()
 
 
@@ -517,13 +524,13 @@ Here’s an example:
     
     ** Ring **
     Name: R6
-    Instance ID: 4723922352
-    Description: Autogenerated Ring of integers mod 6
+    Instance ID: 5083079968
+    Description: Autogenerated ring of integers mod 6
     Order: 6
     Identity: '0'
     Commutative? Yes
     Cyclic?: Yes
-    Generators: ['5', '1']
+    Generators: ['1', '5']
     Elements:
        Index   Name   Inverse  Order
           0     '0'     '0'       1
@@ -566,7 +573,7 @@ to obtain a Monoid, instead of a Semigroup, and we do, as shown below.
     
     ** Monoid **
     Name: R6.Mult
-    Instance ID: 4723923872
+    Instance ID: 5083080880
     Description: Multiplicative-only portion of R6
     Order: 6
     Identity: 1
@@ -615,14 +622,12 @@ elements” <https://en.wikipedia.org/wiki/Finite_field#Field_with_four_elements
                       ['0',  'a' , '1+a',  '1' ],
                       ['0', '1+a',  '1' ,  'a' ]]
     
-    >>> f4 = fa.make_finite_algebra(
-    >>>     'F4',
-    >>>     'Field with 4 elements',
-    >>>     elems,
-    >>>     add_table,
-    >>>     mult_table
-    >>> )
-    
+    >>> f4 = make_finite_algebra('F4',
+                                 'Field with 4 elements',
+                                 elems,
+                                 add_table,
+                                 mult_table
+                                )
     >>> f4.about()
 
 
@@ -631,13 +636,13 @@ elements” <https://en.wikipedia.org/wiki/Finite_field#Field_with_four_elements
     
     ** Field **
     Name: F4
-    Instance ID: 4757353360
+    Instance ID: 5082984080
     Description: Field with 4 elements
     Order: 4
     Identity: '0'
     Commutative? Yes
     Cyclic?: Yes
-    Generators: ['1+a', 'a']
+    Generators: ['a', '1+a']
     Elements:
        Index   Name   Inverse  Order
           0     '0'     '0'       1
@@ -690,7 +695,7 @@ Or, using infix notation via the Algebra context. Note the use of the
 
 .. code:: ipython3
 
-    >>> with fa.InfixNotation(f4) as f:
+    >>> with InfixNotation(f4) as f:
     >>>     print(f['a'] + f['1'])
     >>>     print(f['a']**2)
 
@@ -738,7 +743,7 @@ Or, using infix notation:
 
 .. code:: ipython3
 
-    >>> with fa.InfixNotation(f4) as f:
+    >>> with InfixNotation(f4) as f:
     >>>     print(f['a'] / f['1+a'])
 
 
@@ -791,10 +796,10 @@ As noted earlier, the built-in algebra generator,
 For n=5, this field is called the “Miniature Arithmetic” in [Sawyer
 1978].
 
-This section provides an example of computations with “fractions” in
+This section provides an example of computations with “fractions” in the
 “Miniature Arithmetic”.
 
-Note: Recall, in the finite_algebras module all elements are strings.
+Note: Remember, in the finite_algebras module all elements are strings.
 The method, ``generate_algebra_mod_n``, uses modular arithmetic to
 generate numeric elements, which are then turned into strings. By
 default, the strings are prefixed with ‘a’, but the default prefix can
@@ -805,15 +810,11 @@ numbers they represent (e.g., ’0’, ‘1’, ‘2’, …).
 
 .. code:: ipython3
 
-    >>> n = 5
+    n = 5
     
-    >>> F5 = fa.generate_algebra_mod_n(
-    >>>     n,
-    >>>     elem_name='',
-    >>>     name='F5',
-    >>>     description="Sawyer's Miniature Arithmetic")
+    F5 = generate_algebra_mod_n(n, elem_name='', name='F5', description="Sawyer's Miniature Arithmetic")
     
-    >>> F5.about()
+    F5.about()
 
 
 .. parsed-literal::
@@ -821,13 +822,13 @@ numbers they represent (e.g., ’0’, ‘1’, ‘2’, …).
     
     ** Field **
     Name: F5
-    Instance ID: 4757592080
+    Instance ID: 5083081488
     Description: Sawyer's Miniature Arithmetic
     Order: 5
     Identity: '0'
     Commutative? Yes
     Cyclic?: Yes
-    Generators: ['1', '4', '2', '3']
+    Generators: ['3', '2', '1', '4']
     Elements:
        Index   Name   Inverse  Order
           0     '0'     '0'       1
@@ -855,8 +856,8 @@ numbers they represent (e.g., ’0’, ‘1’, ‘2’, …).
 Example: Fractions in Sawyer’s “Miniature Arithmetic”
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Here, we use the ``InfixNotation`` context manager to illustrate
-Sawyer’s “fraction” example using “Miniature Arithmetic”.
+Here, we use the ``Algebra`` context manager to illustrate Sawyer’s
+“fraction” example using the “Miniature Arithmetic”.
 
 Let :math:`F_5 = \langle S, +, \cdot \rangle`, where
 :math:`S = \{0, 1, 2, 3, 4\}`, be Sawyer’s Miniature Arithmetic,
@@ -868,12 +869,29 @@ then,
 
 .. code:: ipython3
 
-    >>> with fa.InfixNotation(F5) as x:
-    >>>     A = ( (x['1']/x['2'] + x['2']/x['3']) \
-    >>>         * (x['2']/x['3'] - x['3']/x['4'])) \
-    >>>         / (x['3']/x['2'] - x['3']/x['4'] )
+    with InfixNotation(F5) as x:
+        A = ( (x['1']/x['2'] + x['2']/x['3']) \
+            * (x['2']/x['3'] - x['3']/x['4'])) \
+            / (x['3']/x['2'] - x['3']/x['4'] )
     
-    >>> A
+    repr(A)
+
+
+
+
+.. parsed-literal::
+
+    '2'
+
+
+
+Or, using the methods, ``add``, ``sub``, ``mult``, and ``div``:
+
+.. code:: ipython3
+
+    F5.div(F5.mult(F5.add( F5.div('1', '2'), F5.div('2', '3') ),
+                   F5.sub( F5.div('2', '3'), F5.div('3', '4') )),
+           F5.sub( F5.div('3', '2'), F5.div('3', '4') ))
 
 
 
@@ -893,17 +911,28 @@ Python dictionaries.
 Instantiate Algebra from JSON File
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-**Note**: We’ve seen that when the ``finalg`` module is loaded, a
-variable called ``examples`` is created. In addition to this variable, a
-string variable called ``alg_dir`` is also created that specifies the
-path to the example algebras.
+First setup some path variables:
+
+- one that points to the abstract_algebra directory
+- and the other points to a subdirectory containing algebra definitions
+  in JSON format
+
+Also, the code here assumes that there is an environment variable,
+``PYPROJ``, that points to the parent directory of the abstract_algebra
+directory.
+
+.. code:: ipython3
+
+    >>> import os
+    >>> aa_path = os.path.join(os.getenv("PYPROJ"), "finalg")
+    >>> alg_dir = os.path.join(aa_path, "src/finalg/data/algebras")
 
 Here’s the path to the JSON file for the “field with four elements”, and
 a listing of the file itself.
 
 .. code:: ipython3
 
-    >>> f4_json = os.path.join(fa.alg_dir, "field_with_four_elements.json")
+    >>> f4_json = os.path.join(alg_dir, "field_with_four_elements.json")
     
     >>> !cat {f4_json}
 
@@ -928,7 +957,7 @@ And here’s the field created from the JSON file.
 
 .. code:: ipython3
 
-    >>> f4 = fa.make_finite_algebra(f4_json)
+    >>> f4 = make_finite_algebra(f4_json)
     
     >>> f4
 
@@ -976,7 +1005,7 @@ Instantiate Algebra from Python Dictionary
 
 .. code:: ipython3
 
-    >>> f4_from_dict = fa.make_finite_algebra(f4_dict)
+    >>> f4_from_dict = make_finite_algebra(f4_dict)
     
     >>> f4_from_dict
 
@@ -1022,7 +1051,7 @@ convert the string to a Python dictionary, then input that to
 
 .. code:: ipython3
 
-    >>> fa.make_finite_algebra(json.loads(f4_json_string))
+    >>> make_finite_algebra(json.loads(f4_json_string))
 
 
 
@@ -1038,6 +1067,21 @@ convert the string to a Python dictionary, then input that to
     )
 
 
+
+Autogeneration of Rings & Fields
+--------------------------------
+
+There are several functions for autogenerating finite Rings and Fields
+of specified size:
+
+- ``generate_powerset_ring``: :math:`A+B \equiv A \bigtriangleup B` and
+  :math:`A \times B \equiv A \cap B`, where
+  :math:`A,B \in P(\{0, 1, ..., n-1\})`
+- ``generate_algebra_mod_n``: Combination of generate_cyclic_group
+  (:math:`+`) and generate_commutative_monoid (:math:`\times`)
+
+  - If n is prime, then this will be a Field, otherwise it will be a
+    Ring
 
 Direct Products
 ---------------
@@ -1065,7 +1109,7 @@ example.
     
     ** Ring **
     Name: F4_x_F4
-    Instance ID: 4757599376
+    Instance ID: 5084088176
     Description: Direct product of F4 & F4
     Order: 16
     Identity: '0:0'
@@ -1128,108 +1172,93 @@ example.
      [0, 3, 1, 2, 12, 15, 13, 14, 4, 7, 5, 6, 8, 11, 9, 10]]
 
 
-Cayley Tables
--------------
+More on Cayley Tables
+---------------------
 
-Under normal usage, there should be no need to directly create or access
-Cayley Tables. This section, however, provides a brief glimse at the
+Under normal usage, there should be no need to directly create Cayley
+Tables. This section, however, provides a brief glimse at the
 ``CayleyTable`` class.
 
 All of the properties of a finite algebra can be determined from its
-Cayley Table, or in the case of this Python module, its ``CayleyTable``
-object. That functionality is passed through to the appropriate methods
-of the various algebras.
+Cayley Table, or in the case of this Python module, its ``CayleyTable``.
+That functionality is passed through to the appropriate methods of the
+various algebras. Below, is a demonstration of how **distributivity**
+between two binary operations can be determined using their Cayley
+Tables.
 
-The example here demonstrates how **distributivity** between two binary
-operations is determined from their Cayley Tables.
+The two tables, below, were generated from the powerset of a 3 element
+set, where “addition” is **symmetric difference** and “multiplication”
+is **intersection**. Recall, the order of the powerset is :math:`2^n`,
+where :math:`n` is the size of the set.
 
-Below, the tables for addition and multiplication are extracted from the
-powerset Ring, created earlier.
+The element names are simply the string representations of the sets in
+the powerset:
+
+[‘{}’, ‘{0}’, ‘{1}’, ‘{2}’, ‘{0, 1}’, ‘{0, 2}’, ‘{1, 2}’, ‘{0, 1, 2}’]
+
+And the tables, below, contain the positions (indices) of the 8 elements
+in the powerset:
 
 .. code:: ipython3
 
-    >>> rng
+    >>> addtbl = [[0, 1, 2, 3, 4, 5, 6, 7],
+                  [1, 0, 4, 5, 2, 3, 7, 6],
+                  [2, 4, 0, 6, 1, 7, 3, 5],
+                  [3, 5, 6, 0, 7, 1, 2, 4],
+                  [4, 2, 1, 7, 0, 6, 5, 3],
+                  [5, 3, 7, 1, 6, 0, 4, 2],
+                  [6, 7, 3, 2, 5, 4, 0, 1],
+                  [7, 6, 5, 4, 3, 2, 1, 0]]
 
+.. code:: ipython3
 
+    >>> multbl = [[0, 0, 0, 0, 0, 0, 0, 0],
+                  [0, 1, 0, 0, 1, 1, 0, 1],
+                  [0, 0, 2, 0, 2, 0, 2, 2],
+                  [0, 0, 0, 3, 0, 3, 3, 3],
+                  [0, 1, 2, 0, 4, 1, 2, 4],
+                  [0, 1, 0, 3, 1, 5, 3, 5],
+                  [0, 0, 2, 3, 2, 3, 6, 6],
+                  [0, 1, 2, 3, 4, 5, 6, 7]]
+
+.. code:: ipython3
+
+    >>> from finalg.cayley_table import CayleyTable
+
+.. code:: ipython3
+
+    >>> addct = CayleyTable(addtbl)
+    >>> addct._about(True)
 
 
 .. parsed-literal::
 
-    Ring(
-    'PSRing2',
-    'Autogenerated Ring on powerset of {0, 1} w/ symm. diff. (add) & intersection (mult)',
-    ('{}', '{0}', '{1}', '{0, 1}'),
-    [[0, 1, 2, 3], [1, 0, 3, 2], [2, 3, 0, 1], [3, 2, 1, 0]],
-    [[0, 0, 0, 0], [0, 1, 0, 1], [0, 0, 2, 2], [0, 1, 2, 3]]
-    )
-
+      Order  Associative?  Commutative?  Left Id?  Right Id? Cancel? Identity?  Inverses?  Algebra?
+    ---------------------------------------------------------------------------------------------------------
+         8        True         True            0         0      True          0       True      Group
 
 
 .. code:: ipython3
 
-    >>> addtbl = rng.add_table
-    >>> addtbl
-
-
+    >>> mulct = CayleyTable(multbl)
+    >>> mulct._about(True)
 
 
 .. parsed-literal::
 
-    CayleyTable([[0, 1, 2, 3], [1, 0, 3, 2], [2, 3, 0, 1], [3, 2, 1, 0]])
+      Order  Associative?  Commutative?  Left Id?  Right Id? Cancel? Identity?  Inverses?  Algebra?
+    ---------------------------------------------------------------------------------------------------------
+         8        True         True            7         7     False          7      False     Monoid
 
 
+Checking Tables for Distributivity
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The actual *table* is stored within the ``CayleyTable`` as a numpy
-array.
-
-.. code:: ipython3
-
-    >>> type(addtbl.table)
-
-
-
-
-.. parsed-literal::
-
-    numpy.ndarray
-
-
+Multiplication distributes over addition.
 
 .. code:: ipython3
 
-    >>> print(addtbl.table)
-
-
-.. parsed-literal::
-
-    [[0 1 2 3]
-     [1 0 3 2]
-     [2 3 0 1]
-     [3 2 1 0]]
-
-
-And, same for the multiplication table:
-
-.. code:: ipython3
-
-    >>> multbl = rng.mult_table
-    >>> print(multbl.table)
-
-
-.. parsed-literal::
-
-    [[0 0 0 0]
-     [0 1 0 1]
-     [0 0 2 2]
-     [0 1 2 3]]
-
-
-``distributes_over`` is a method of ``CayleyTable``. It is used to
-verify that multiplication distributes over addition.
-
-.. code:: ipython3
-
-    >>> multbl.distributes_over(addtbl)
+    >>> mulct.distributes_over(addct)
 
 
 
@@ -1240,11 +1269,11 @@ verify that multiplication distributes over addition.
 
 
 
-But, addition does not distribute over multiplication.
+But, addition does not distribute over multiplication, as expected.
 
 .. code:: ipython3
 
-    >>> addtbl.distributes_over(multbl)
+    >>> addct.distributes_over(mulct)
 
 
 

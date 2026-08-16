@@ -78,6 +78,7 @@ class NDimensionalModule(Module):
         return module_dot_product(self, u, v)
 
 
+# TODO: move this to be inside NDimensionalModule
 def module_sv_mult(ring):
     """Returns a function that scales a vector.  That is, a function that takes
     a scalar and a vector, and returns their product, also a vector."""
@@ -95,6 +96,7 @@ def module_sv_mult(ring):
     return sv_mult
 
 
+# TODO: move this to be inside NDimensionalModule
 def module_dot_product(ring, vec1, vec2):
     """Returns a scalar (ring element) that represents the dot-product of the
     two input vectors."""

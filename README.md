@@ -2,6 +2,8 @@
 
 Finite abstract algebras in Python - groups, rings, fields, vector spaces, etc.
 
+*(This is a continuation of the now archived repo, https://github.com/alreich/abstract_algebra)*
+
 **finalg** is a Python package for constructing and exploring **finite abstract algebras** —
 Magmas, Semigroups, Monoids, Groups, Quasigroups, Loops, Rings, Fields, Modules, and Vector
 Spaces — using explicit **Cayley (multiplication) tables**. It is aimed at hands-on exploration

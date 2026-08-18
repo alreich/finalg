@@ -5,7 +5,7 @@ from collections.abc import Sequence
 
 class Perm(Sequence):
 
-    def __init__(self, values):
+    def __init__(self, values: list[int]):
         """A Perm represents a specific ordering of a finite set of n consecutive positive
         integers, where the minimum number ("base") is either 0 or 1. For example, a base-0
         Perm is an ordering (tuple) of the elements of the set {0,...,n-1}, and a base-1 Perm
@@ -61,7 +61,7 @@ class Perm(Sequence):
         """Returns the size of the permutation."""
         return len(self._values)
 
-    def __eq__(self, other):
+    def __eq__(self, other) -> bool:
         """Return True if this Perm equals the other Perm."""
         return self._values == other.values
 

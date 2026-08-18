@@ -136,7 +136,7 @@ class TestRingDirectProduct(TestCase):
         from finalg import generate_cyclic_group
         z4 = generate_cyclic_group(4)
         with self.assertRaises(ValueError):
-            r4 * z4
+            _ = r4 * z4
 
 
 class TestRingElementOrder(TestCase):

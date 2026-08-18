@@ -161,6 +161,7 @@ class TestMakeTableFromXml(TestCase):
 class TestCompressRuns(TestCase):
 
     def test_repeated_chars_compressed(self):
+        # noinspection SpellCheckingInspection
         self.assertEqual(compress_runs('ffrrrf'), 'f^2r^3f')
 
     def test_all_repeats(self):

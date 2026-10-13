@@ -50,6 +50,10 @@ def yes_or_no(true_or_false):
         return "No"
 
 
+def is_power_of_two(n):
+    return n > 0 and (n & (n - 1)) == 0
+
+
 def symm_diff_of_two_lists_of_lists (list1, list2):
     """Return the symmetric difference between two lists of lists"""
     # Turn the inner lists into tuples, because tuples

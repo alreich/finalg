@@ -39,40 +39,75 @@ from functools import reduce
 #
 #     return aux([], list_of_groups)
 
-def partition_into_isomorphic_lists(list_of_groups):
-    """Partition the list of groups into sub-lists of groups that are isomorphic to each other.
-    The purpose of this function is to operate on the proper subgroups of a group to determine
-    the unique subgroups, up to isomorphism.
+# def partition_into_isomorphic_lists(list_of_groups):
+#     """Partition the list of groups into sub-lists of groups that are isomorphic to each other.
+#     The purpose of this function is to operate on the proper subgroups of a group to determine
+#     the unique subgroups, up to isomorphism.
+#
+#     Uses 'fast_isomorphic' rather than the brute-force 'isomorphic', since the latter tries
+#     every one of other.order! bijections and is intractable once subalgebra orders climb
+#     past roughly 8-9 (e.g. the order-12 subgroups of A5).
+#     """
+#     def iso_and_not_iso(gp, gps):
+#         """Partition the list of groups, gps, into two lists, those that are isomorphic to gp
+#         and those that are not."""
+#         iso_to_grp = []
+#         not_iso_to_grp = []
+#         for g in gps:
+#             if gp.fast_isomorphic(g):
+#                 iso_to_grp.append(g)
+#             else:
+#                 not_iso_to_grp.append(g)
+#         return iso_to_grp, not_iso_to_grp
+#
+#     def aux(result, remainder):
+#         """Recursively partition 'remainder' into lists that are isomorphic to its first member
+#         and those that are not, then recurse on the remainder."""
+#         if len(remainder) == 0:
+#             return result
+#         else:
+#             first = remainder[0]
+#             rest = remainder[1:]  # was 'remainder', which wastefully compared 'first' to itself
+#             iso_to_first, not_iso_to_first = iso_and_not_iso(first, rest)
+#             result.append([first] + iso_to_first)
+#             return aux(result, not_iso_to_first)
+#
+#     return aux([], list_of_groups)
 
-    Uses 'fast_isomorphic' rather than the brute-force 'isomorphic', since the latter tries
-    every one of other.order! bijections and is intractable once subalgebra orders climb
-    past roughly 8-9 (e.g. the order-12 subgroups of A5).
+
+def partition_into_isomorphic_lists(algebras):
     """
-    def iso_and_not_iso(gp, gps):
-        """Partition the list of groups, gps, into two lists, those that are isomorphic to gp
-        and those that are not."""
-        iso_to_grp = []
-        not_iso_to_grp = []
-        for g in gps:
-            if gp.fast_isomorphic(g):
-                iso_to_grp.append(g)
-            else:
-                not_iso_to_grp.append(g)
-        return iso_to_grp, not_iso_to_grp
+    Groups a list of Algebra instances into equivalence classes based on isomorphism,
+    and sorts the resulting classes by their Algebra order from smallest to largest.
 
-    def aux(result, remainder):
-        """Recursively partition 'remainder' into lists that are isomorphic to its first member
-        and those that are not, then recurse on the remainder."""
-        if len(remainder) == 0:
-            return result
-        else:
-            first = remainder[0]
-            rest = remainder[1:]  # was 'remainder', which wastefully compared 'first' to itself
-            iso_to_first, not_iso_to_first = iso_and_not_iso(first, rest)
-            result.append([first] + iso_to_first)
-            return aux(result, not_iso_to_first)
+    Parameters:
+    algebras (list): A list of Algebra class instances.
 
-    return aux([], list_of_groups)
+    Returns:
+    list: A list of lists, where each inner list represents an equivalence class,
+          sorted ascending by the 'order' property of the algebras.
+    """
+    classes = []
+
+    for current_algebra in algebras:
+        placed = False
+        # Check if current_algebra belongs to an existing equivalence class
+        for eq_class in classes:
+            # Check against the first representative of the class
+            representative = eq_class[0]
+            if current_algebra.fast_isomorphic(representative):
+                eq_class.append(current_algebra)
+                placed = True
+                break
+
+        # If it doesn't match any existing class, it starts its own new class
+        if not placed:
+            classes.append([current_algebra])
+
+    # Sort the list of classes based on the 'order' of the first item in each class
+    classes.sort(key=lambda eq_class: eq_class[0].order)
+
+    return classes
 
 
 def about_isomorphic_partition(alg, part):

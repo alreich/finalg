@@ -27,6 +27,7 @@ from finalg.ring import Ring
 from finalg.field import Field
 from finalg.monoid import Monoid
 from finalg.abstract_matrix import AbstractMatrix
+from finalg.utilities import is_power_of_two
 
 
 class TestGenerateCyclicGroup(TestCase):
@@ -197,7 +198,8 @@ class TestGenerateDihedralGroup(TestCase):
     def test_order_and_name(self):
         d4, elem_dict, iterations = generate_dihedral_group(4)
         self.assertEqual(d4.order, 8)
-        self.assertEqual(d4.name, 'D8')
+        # self.assertEqual(d4.name, 'D8')
+        self.assertEqual(d4.name, 'D4')
         self.assertIsInstance(d4, Group)
 
     def test_generator_names_present(self):
@@ -222,7 +224,10 @@ class TestGenerateDicyclicGroup(TestCase):
             with self.subTest(n=n):
                 dic, elem_dict, iterations = generate_dicyclic_group(n)
                 self.assertEqual(dic.order, 4 * n)
-                self.assertEqual(dic.name, f'Dic{n}')
+                if is_power_of_two(n):
+                    self.assertEqual(dic.name, f'Q{4 * n}')
+                else:
+                    self.assertEqual(dic.name, f'Dic{n}')
                 self.assertIsInstance(dic, Group)
 
     def test_return_values_match_dihedral_signature(self):
@@ -302,6 +307,7 @@ class TestGenerateDicyclicGroup(TestCase):
         for bad_n in (1, 0, -3, 2.5):
             with self.subTest(n=bad_n):
                 with self.assertRaises(ValueError):
+                    # noinspection bad-argument-type
                     generate_dicyclic_group(bad_n)
 
     def test_verbose_prints_and_gives_same_group(self):

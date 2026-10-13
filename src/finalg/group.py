@@ -2,6 +2,7 @@
 #   Group
 # =========
 
+import itertools as it
 import numpy as np
 from pprint import pprint
 
@@ -30,6 +31,82 @@ class Group(Monoid):
         Each element of the quotient group will be a representative element from
         one of the subgroup's cosets."""
         return self.quotient_group(normal_subgroup)
+
+    def semidirect_product(self, other, action, name=None, description=None, check=True):
+        """Return the semi-direct product of this group, N, with the `other` group, H, written
+        N x| H (often N ⋊ H), where H acts on N by automorphisms.
+
+        The `action` specifies, for each element h of H, an automorphism phi_h of N. It can be:
+
+        (1) a function of two arguments, action(h, n), that returns the image of the N-element
+            n under phi_h (e.g., lambda h, n: ...),
+        (2) a dictionary that maps each element h of H to a dictionary {n: phi_h(n), ...} that
+            covers every element of N, or
+        (3) a dictionary that maps each element h of H to a function of one argument that returns
+            phi_h(n) for any element n of N.
+
+        The elements of the result are the pairs (n, h), named "n:h", where the delimiter is the
+        one returned by self.direct_product_delimiter() (":" by default), in the same order as the
+        elements of the direct product. The product is defined by
+
+            (n1, h1) * (n2, h2) = (n1 * phi_h1(n2), h1 * h2),
+
+        which is associative exactly when phi_(h1*h2) = phi_h1 o phi_h2. N is (isomorphic to) a
+        normal subgroup of the result, namely the elements (n, e_H), and H is (isomorphic to) a
+        complement of it, namely the elements (e_N, h). If the action is trivial, then the
+        result is the direct product, N * H.
+
+        If `check` is True (the default), then the action is verified to consist of automorphisms
+        of N, and to be a homomorphism from H into the group of automorphisms of N, and a ValueError
+        is raised if it is not. Setting `check` to False skips this verification, which is only
+        worthwhile for large groups, and then an invalid action produces a table that does not
+        define a group, so that make_finite_algebra will most likely complain."""
+        from finalg.make_finite_algebra import make_finite_algebra
+        if not isinstance(other, Group):
+            raise TypeError(f"The other algebra, {getattr(other, 'name', repr(other))}, must be a Group.")
+        n_grp, h_grp = self, other
+        n_elems = n_grp.elements
+
+        # Normalize the action into a dictionary of dictionaries: phi[h][n] = image of n under phi_h
+        phi = dict()
+        for h in h_grp.elements:
+            if callable(action):
+                phi[h] = {n: action(h, n) for n in n_elems}
+            else:
+                try:
+                    phi_h = action[h]
+                except KeyError:
+                    raise ValueError(f"The action does not define an automorphism for the element '{h}' of {h_grp.name}.")
+                phi[h] = {n: phi_h(n) for n in n_elems} if callable(phi_h) else dict(phi_h)
+
+        if check:
+            n_set = set(n_elems)
+            for h, f in phi.items():
+                if set(f.keys()) != n_set or not set(f.values()) <= n_set:
+                    raise ValueError(f"The action of '{h}' is not a map from {n_grp.name} into itself.")
+                if len(set(f.values())) != n_grp.order:
+                    raise ValueError(f"The action of '{h}' is not one-to-one and onto {n_grp.name}.")
+                for a, b in it.product(n_elems, n_elems):
+                    if f[n_grp.op(a, b)] != n_grp.op(f[a], f[b]):
+                        raise ValueError(f"The action of '{h}' is not a homomorphism of {n_grp.name}.")
+            for h1, h2 in it.product(h_grp.elements, h_grp.elements):
+                phi_h1h2 = phi[h_grp.op(h1, h2)]
+                for n in n_elems:
+                    if phi_h1h2[n] != phi[h1][phi[h2][n]]:
+                        raise ValueError(f"The action is not a homomorphism from {h_grp.name} to "
+                                         f"the automorphisms of {n_grp.name}: phi_({h1}*{h2}) != phi_{h1} o phi_{h2}.")
+
+        pairs = list(it.product(n_elems, h_grp.elements))  # Same ordering as the direct product
+        index = {pair: i for i, pair in enumerate(pairs)}
+        table = [[index[(n_grp.op(n1, phi[h1][n2]), h_grp.op(h1, h2))] for (n2, h2) in pairs]
+                 for (n1, h1) in pairs]
+        delimiter = self.direct_product_delimiter()
+        sdp_name = name if name else f"{n_grp.name}_sdp_{h_grp.name}"
+        sdp_description = description if description else f"Semi-direct product of {n_grp.name} by {h_grp.name}"
+        return make_finite_algebra(sdp_name,
+                                   sdp_description,
+                                   [f"{n}{delimiter}{h}" for n, h in pairs],
+                                   table)
 
     def inverse_mapping(self):
         """Returns a dictionary that maps each element to its inverse."""

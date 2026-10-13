@@ -6,7 +6,7 @@ import io
 import contextlib
 from unittest import TestCase
 
-from finalg import generate_symmetric_group, generate_cyclic_group, make_finite_algebra
+from finalg import generate_symmetric_group, generate_cyclic_group, generate_dihedral_group, make_finite_algebra
 from finalg.group import Group
 
 
@@ -194,3 +194,106 @@ class TestGroupAbout(TestCase):
         with contextlib.redirect_stdout(buf):
             s3().about(max_size=1)
         self.assertIn('no table is printed', buf.getvalue())
+
+
+def mult_action(modulus, k):
+    """Action of the cyclic group Z_m (string-named integer elements) on the cyclic group Z_modulus,
+    where h acts on x by multiplication by k^h, mod modulus."""
+    return lambda h, x: str((int(x) * pow(k, int(h), modulus)) % modulus)
+
+
+class TestSemidirectProduct(TestCase):
+
+    def setUp(self):
+        self.z2 = generate_cyclic_group(2)
+        self.z3 = generate_cyclic_group(3)
+        self.z4 = generate_cyclic_group(4)
+        self.z7 = generate_cyclic_group(7)
+
+    def test_z3_by_z2_with_inversion_is_s3(self):
+        g = self.z3.semidirect_product(self.z2, mult_action(3, 2))
+        self.assertIsInstance(g, Group)
+        self.assertEqual(g.order, 6)
+        self.assertEqual(g.name, 'Z3_sdp_Z2')
+        self.assertEqual(g.elements, ('0:0', '0:1', '1:0', '1:1', '2:0', '2:1'))
+        self.assertFalse(g.is_commutative())
+        self.assertTrue(g.isomorphic(s3()))
+
+    def test_z4_by_z2_with_inversion_is_d8(self):
+        g = self.z4.semidirect_product(self.z2, mult_action(4, 3))
+        d8, _, _ = generate_dihedral_group(4)
+        self.assertEqual(g.order, 8)
+        self.assertTrue(g.isomorphic(d8))
+
+    def test_frobenius_group_of_order_21(self):
+        g = self.z7.semidirect_product(self.z3, mult_action(7, 2))
+        self.assertEqual(g.order, 21)
+        self.assertFalse(g.is_commutative())
+        orders = sorted(g.element_order(e) for e in g.elements)
+        self.assertEqual(orders, [1] + [3] * 14 + [7] * 6)
+
+    def test_product_rule(self):
+        # (n1, h1) * (n2, h2) = (n1 + phi_h1(n2), h1 + h2), here with Z7 and phi_h(x) = 2^h x
+        g = self.z7.semidirect_product(self.z3, mult_action(7, 2))
+        self.assertEqual(g.op('3:1', '5:2'), '6:0')  # (3 + 2*5 mod 7, 1 + 2 mod 3) = (6, 0)
+        self.assertEqual(g.op('0:1', '1:0'), '2:1')
+
+    def test_trivial_action_gives_direct_product(self):
+        g = self.z4.semidirect_product(self.z3, lambda h, x: x)
+        self.assertEqual(g, self.z4 * self.z3)
+
+    def test_n_is_normal_subgroup_with_h_as_complement(self):
+        g = self.z7.semidirect_product(self.z3, mult_action(7, 2))
+        n_sub = g.subalgebra_from_elements([f"{n}:0" for n in self.z7.elements], name='N')
+        h_sub = g.subalgebra_from_elements([f"0:{h}" for h in self.z3.elements], name='H')
+        self.assertTrue(g.is_normal(n_sub))
+        self.assertFalse(g.is_normal(h_sub))
+        self.assertEqual(n_sub.order * h_sub.order, g.order)
+        self.assertEqual(set(n_sub.elements) & set(h_sub.elements), {'0:0'})
+
+    def test_action_as_dict_of_dicts_or_dict_of_functions(self):
+        expected = self.z3.semidirect_product(self.z2, mult_action(3, 2))
+        by_dicts = self.z3.semidirect_product(
+            self.z2, {'0': {'0': '0', '1': '1', '2': '2'},
+                      '1': {'0': '0', '1': '2', '2': '1'}})
+        by_funcs = self.z3.semidirect_product(
+            self.z2, {'0': lambda x: x, '1': lambda x: str((-int(x)) % 3)})
+        self.assertEqual(by_dicts, expected)
+        self.assertEqual(by_funcs, expected)
+
+    def test_custom_name_description_and_delimiter(self):
+        z3 = generate_cyclic_group(3)
+        z3.direct_product_delimiter('|')
+        g = z3.semidirect_product(self.z2, mult_action(3, 2), name='MyS3', description='custom')
+        self.assertEqual(g.name, 'MyS3')
+        self.assertEqual(g.description, 'custom')
+        self.assertEqual(g.elements[:3], ('0|0', '0|1', '1|0'))
+
+    def test_action_that_is_not_one_to_one_raises(self):
+        with self.assertRaises(ValueError):
+            self.z4.semidirect_product(
+                self.z2, lambda h, x: str((2 * int(x)) % 4) if h == '1' else x)
+
+    def test_action_that_is_not_a_homomorphism_of_n_raises(self):
+        swap_2_and_3 = {'0': '0', '1': '1', '2': '3', '3': '2'}
+        with self.assertRaises(ValueError):
+            self.z4.semidirect_product(
+                self.z2, lambda h, x: swap_2_and_3[x] if h == '1' else x)
+
+    def test_action_that_is_not_a_homomorphism_from_h_raises(self):
+        # Inversion for both 1 and 2 in Z3 would need phi_2 = phi_1 o phi_1 = identity.
+        with self.assertRaises(ValueError):
+            self.z3.semidirect_product(
+                self.z3, lambda h, x: x if h == '0' else str((-int(x)) % 3))
+
+    def test_action_missing_an_element_of_h_raises(self):
+        with self.assertRaises(ValueError):
+            self.z3.semidirect_product(self.z2, {'0': lambda x: x})
+
+    def test_action_mapping_outside_n_raises(self):
+        with self.assertRaises(ValueError):
+            self.z3.semidirect_product(self.z2, lambda h, x: '9')
+
+    def test_other_must_be_a_group(self):
+        with self.assertRaises(TypeError):
+            self.z3.semidirect_product('not a group', lambda h, x: x)

@@ -283,7 +283,7 @@ class TestGenerateDicyclicGroup(TestCase):
                 q8 = finalg.examples[i]
         self.assertIsNotNone(q8, "Built-in example 'Q8' not found")
         dic2, _, _ = generate_dicyclic_group(2)
-        self.assertTrue(dic2.isomorphic(q8))
+        self.assertTrue(dic2.fast_isomorphic(q8))
 
     def test_dic3_differs_from_other_nonabelian_groups_of_order_12(self):
         # Compare sorted lists of element orders rather than calling 'isomorphic',

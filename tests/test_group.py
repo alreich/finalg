@@ -217,13 +217,13 @@ class TestSemidirectProduct(TestCase):
         self.assertEqual(g.name, 'Z3_sdp_Z2')
         self.assertEqual(g.elements, ('0:0', '0:1', '1:0', '1:1', '2:0', '2:1'))
         self.assertFalse(g.is_commutative())
-        self.assertTrue(g.isomorphic(s3()))
+        self.assertTrue(g.fast_isomorphic(s3()))
 
     def test_z4_by_z2_with_inversion_is_d8(self):
         g = self.z4.semidirect_product(self.z2, mult_action(4, 3))
         d8, _, _ = generate_dihedral_group(4)
         self.assertEqual(g.order, 8)
-        self.assertTrue(g.isomorphic(d8))
+        self.assertTrue(g.fast_isomorphic(d8))
 
     def test_frobenius_group_of_order_21(self):
         g = self.z7.semidirect_product(self.z3, mult_action(7, 2))

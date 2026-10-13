@@ -19,7 +19,8 @@ from finalg.algebra_generators import (
     generate_nxn_matrix_algebra,
     generate_dihedral_group,
     generate_dicyclic_group,
-    generate_algebra_from_element_dict, generate_alternating_group,
+    generate_algebra_from_element_dict,
+    generate_alternating_group
 )
 from finalg.group import Group
 from finalg.ring import Ring

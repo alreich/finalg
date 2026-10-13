@@ -3,8 +3,11 @@ Unit tests for finalg.algebra_generators: functions that construct common
 finite algebras (cyclic groups, symmetric groups, rings mod n, etc.).
 """
 
+import io
+from contextlib import redirect_stdout
 from unittest import TestCase
 
+import finalg
 from finalg.algebra_generators import (
     generate_cyclic_group,
     generate_symmetric_group,
@@ -15,6 +18,7 @@ from finalg.algebra_generators import (
     generate_algebra_mod_n,
     generate_nxn_matrix_algebra,
     generate_dihedral_group,
+    generate_dicyclic_group,
     generate_algebra_from_element_dict, generate_alternating_group,
 )
 from finalg.group import Group
@@ -208,6 +212,105 @@ class TestGenerateDihedralGroup(TestCase):
     def test_not_abelian_for_n_ge_3(self):
         d4, _, _ = generate_dihedral_group(4)
         self.assertFalse(d4.is_abelian())
+
+
+class TestGenerateDicyclicGroup(TestCase):
+
+    def test_order_name_and_type(self):
+        for n in range(2, 9):
+            with self.subTest(n=n):
+                dic, elem_dict, iterations = generate_dicyclic_group(n)
+                self.assertEqual(dic.order, 4 * n)
+                self.assertEqual(dic.name, f'Dic{n}')
+                self.assertIsInstance(dic, Group)
+
+    def test_return_values_match_dihedral_signature(self):
+        dic, elem_dict, iterations = generate_dicyclic_group(3)
+        self.assertEqual(list(elem_dict.keys()), list(dic.elements))
+        self.assertEqual(iterations, 1)
+
+    def test_element_names(self):
+        dic, _, _ = generate_dicyclic_group(2)
+        self.assertEqual(dic.elements, ('e', 'a', 'a^2', 'a^3', 'x', 'ax', 'a^2x', 'a^3x'))
+
+    def test_identity_is_e(self):
+        dic, _, _ = generate_dicyclic_group(4)
+        self.assertEqual(dic.identity, 'e')
+
+    def test_not_abelian_and_not_cyclic(self):
+        for n in range(2, 9):
+            with self.subTest(n=n):
+                dic, _, _ = generate_dicyclic_group(n)
+                self.assertFalse(dic.is_abelian())
+                self.assertFalse(dic.is_cyclic())
+
+    def test_x_squared_equals_a_to_the_n(self):
+        for n in range(2, 9):
+            with self.subTest(n=n):
+                dic, _, _ = generate_dicyclic_group(n)
+                a_to_n = 'a' if n == 1 else f'a^{n}'
+                self.assertEqual(dic.op('x', 'x'), a_to_n)
+
+    def test_a_has_order_2n(self):
+        for n in range(2, 9):
+            with self.subTest(n=n):
+                dic, _, _ = generate_dicyclic_group(n)
+                self.assertEqual(dic.element_order('a'), 2 * n)
+
+    def test_x_inverse_a_x_equals_a_inverse(self):
+        for n in range(2, 9):
+            with self.subTest(n=n):
+                dic, _, _ = generate_dicyclic_group(n)
+                self.assertEqual(dic.op(dic.inv('x'), 'a', 'x'), dic.inv('a'))
+
+    def test_unique_element_of_order_2(self):
+        # The only involution in a dicyclic group is the central element a^n.
+        for n in range(2, 9):
+            with self.subTest(n=n):
+                dic, _, _ = generate_dicyclic_group(n)
+                involutions = [e for e in dic.elements if dic.element_order(e) == 2]
+                self.assertEqual(involutions, [f'a^{n}'])
+
+    def test_center_is_generated_by_a_to_the_n(self):
+        dic, _, _ = generate_dicyclic_group(5)
+        self.assertEqual(set(dic.center()), {'e', 'a^5'})
+
+    def test_dic2_is_isomorphic_to_the_quaternion_group(self):
+        q8 = None
+        for i in range(len(finalg.examples)):
+            if finalg.examples[i].name == 'Q8':
+                q8 = finalg.examples[i]
+        self.assertIsNotNone(q8, "Built-in example 'Q8' not found")
+        dic2, _, _ = generate_dicyclic_group(2)
+        self.assertTrue(dic2.isomorphic(q8))
+
+    def test_dic3_differs_from_other_nonabelian_groups_of_order_12(self):
+        # Compare sorted lists of element orders rather than calling 'isomorphic',
+        # which brute-forces element mappings and is far too expensive at order 12.
+        def element_orders(group):
+            return sorted(group.element_order(e) for e in group.elements)
+
+        dic3, _, _ = generate_dicyclic_group(3)
+        d12, _, _ = generate_dihedral_group(6)
+        a4 = generate_alternating_group(4)
+        self.assertEqual(element_orders(dic3), [1, 2, 3, 3, 4, 4, 4, 4, 4, 4, 6, 6])
+        self.assertNotEqual(element_orders(dic3), element_orders(d12))  # D12 has 7 involutions
+        self.assertNotEqual(element_orders(dic3), element_orders(a4))   # A4 has no elements of order 4 or 6
+
+    def test_invalid_n_raises(self):
+        for bad_n in (1, 0, -3, 2.5):
+            with self.subTest(n=bad_n):
+                with self.assertRaises(ValueError):
+                    generate_dicyclic_group(bad_n)
+
+    def test_verbose_prints_and_gives_same_group(self):
+        buffer = io.StringIO()
+        with redirect_stdout(buffer):
+            dic, _, _ = generate_dicyclic_group(3, verbose=True)
+        self.assertIn('Dic3', buffer.getvalue())
+        quiet, _, _ = generate_dicyclic_group(3)
+        self.assertEqual(dic.elements, quiet.elements)
+        self.assertEqual(dic.name, quiet.name)
 
 
 class TestGenerateAlgebraFromElementDict(TestCase):

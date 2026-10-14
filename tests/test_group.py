@@ -6,7 +6,8 @@ import io
 import contextlib
 from unittest import TestCase
 
-from finalg import generate_symmetric_group, generate_cyclic_group, generate_dihedral_group, make_finite_algebra
+from finalg import generate_symmetric_group, generate_cyclic_group, generate_dihedral_group, \
+    generate_dicyclic_group, make_finite_algebra
 from finalg.group import Group
 
 
@@ -297,3 +298,111 @@ class TestSemidirectProduct(TestCase):
     def test_other_must_be_a_group(self):
         with self.assertRaises(TypeError):
             self.z3.semidirect_product('not a group', lambda h, x: x)
+
+
+class TestCentralProduct(TestCase):
+
+    def setUp(self):
+        self.z2 = generate_cyclic_group(2)
+        self.z3 = generate_cyclic_group(3)
+        self.z4 = generate_cyclic_group(4)
+        self.d4, _, _ = generate_dihedral_group(4)      # order 8, center {'e', 'r^2'}
+        self.q8, _, _ = generate_dicyclic_group(2)      # order 8, center {'e', 'a^2'}
+
+    def pauli(self):
+        return self.z4.central_product(self.d4, ('2', 'r^2'))
+
+    def test_pauli_group_is_z4_central_product_d4(self):
+        g = self.pauli()
+        self.assertIsInstance(g, Group)
+        self.assertEqual(g.order, 16)
+        self.assertEqual(g.name, 'Z4_cp_D4')
+        self.assertEqual(g.elements[:3], ('0:e', '0:r', '0:f'))
+        self.assertFalse(g.is_commutative())
+        orders = sorted(g.element_order(e) for e in g.elements)
+        self.assertEqual(orders, [1] + [2] * 7 + [4] * 8)
+
+    def test_z4_central_product_q8_is_isomorphic_to_z4_central_product_d4(self):
+        g = self.z4.central_product(self.q8, ('2', 'a^2'))
+        self.assertEqual(g.order, 16)
+        self.assertTrue(g.fast_isomorphic(self.pauli()))
+
+    def test_pauli_group_is_also_a_semidirect_product(self):
+        # (Z4 x Z2) x| Z2, where the order-2 generator sends (a, b) to (a + 2b, b)
+        z4_x_z2 = self.z4 * self.z2
+
+        def action(h, x):
+            a, b = x.split(':')
+            return x if h == '0' else f"{(int(a) + 2 * int(b)) % 4}:{b}"
+
+        sdp = z4_x_z2.semidirect_product(self.z2, action)
+        self.assertTrue(sdp.fast_isomorphic(self.pauli()))
+
+    def test_pauli_group_is_not_isomorphic_to_similar_groups_of_order_16(self):
+        g = self.pauli()
+        self.assertFalse(g.fast_isomorphic(self.z2 * self.d4))
+        self.assertFalse(g.fast_isomorphic(self.z2 * self.q8))
+        self.assertFalse(g.fast_isomorphic(self.z4 * self.z2 * self.z2))
+
+    def test_identification_as_dictionary_matches_pair(self):
+        by_dict = self.z4.central_product(self.d4, {'0': 'e', '2': 'r^2'})
+        self.assertEqual(by_dict, self.pauli())
+
+    def test_trivial_identification_gives_direct_product(self):
+        g = self.z4.central_product(self.z3, {'0': '0'})
+        self.assertEqual(g, self.z4 * self.z3)
+
+    def test_identifying_all_of_z4_with_z4_gives_z4(self):
+        # Z4 o Z4, identifying generators, is (Z4 x Z4) / {(a, -a)}, which has order 16 / 4 = 4
+        g = self.z4.central_product(self.z4, ('1', '1'))
+        self.assertEqual(g.order, 4)
+        self.assertTrue(g.is_commutative())
+        self.assertTrue(g.fast_isomorphic(self.z4))
+
+    def test_custom_name_description_and_delimiter(self):
+        z4 = generate_cyclic_group(4)
+        z4.direct_product_delimiter('|')
+        g = z4.central_product(self.d4, ('2', 'r^2'), name='Pauli', description='custom')
+        self.assertEqual(g.name, 'Pauli')
+        self.assertEqual(g.description, 'custom')
+        self.assertEqual(g.elements[:2], ('0|e', '0|r'))
+
+    def test_non_central_element_raises(self):
+        with self.assertRaises(ValueError):
+            self.z4.central_product(self.d4, ('2', 'r'))  # 'r' is not central in D4 (and has order 4)
+        with self.assertRaises(ValueError):
+            self.z2.central_product(self.d4, ('1', 'f'))  # 'f' has order 2 but is not central
+
+    def test_elements_of_different_orders_raise(self):
+        with self.assertRaises(ValueError):
+            self.z4.central_product(self.d4, ('1', 'r^2'))
+
+    def test_element_not_in_group_raises(self):
+        with self.assertRaises(ValueError):
+            self.z4.central_product(self.d4, ('9', 'r^2'))
+        with self.assertRaises(ValueError):
+            self.z4.central_product(self.d4, ('2', 'zzz'))
+
+    def test_dictionary_that_is_not_one_to_one_raises(self):
+        with self.assertRaises(ValueError):
+            self.z4.central_product(self.d4, {'0': 'e', '2': 'e'})
+
+    def test_dictionary_that_is_not_closed_raises(self):
+        with self.assertRaises(ValueError):
+            self.z4.central_product(self.d4, {'0': 'e', '1': 'r^2'})
+
+    def test_dictionary_that_is_not_a_homomorphism_raises(self):
+        with self.assertRaises(ValueError):
+            self.z4.central_product(self.d4, {'0': 'r^2', '2': 'e'})
+
+    def test_empty_identification_raises(self):
+        with self.assertRaises(ValueError):
+            self.z4.central_product(self.d4, {})
+
+    def test_bad_identification_type_raises(self):
+        with self.assertRaises(TypeError):
+            self.z4.central_product(self.d4, 'not an identification')
+
+    def test_other_must_be_a_group(self):
+        with self.assertRaises(TypeError):
+            self.z4.central_product('not a group', ('2', 'r^2'))

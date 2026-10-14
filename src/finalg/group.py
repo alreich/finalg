@@ -108,6 +108,108 @@ class Group(Monoid):
                                    [f"{n}{delimiter}{h}" for n, h in pairs],
                                    table)
 
+    def central_product(self, other, identification, name=None, description=None, check=True):
+        """Return the central product of this group, G, with the `other` group, H, written G ∘ H,
+        in which a central subgroup A of G is identified with a central subgroup B of H.
+
+        The `identification` says which central elements are identified, and can be:
+
+        (1) a pair (g, h), where g is a central element of G and h is a central element of H, both
+            of the same order. The cyclic subgroups they generate are identified via g^k <-> h^k, or
+        (2) a dictionary {a: theta(a), ...} that maps every element a of a central subgroup A of G
+            onto the elements theta(a) of a central subgroup B of H, where theta is an isomorphism.
+
+        The result is the quotient of the direct product G * H by the subgroup
+
+            N = {(a, theta(a)^-1) : a in A},
+
+        which is normal, because it is central. The elements of the result are the cosets of N, each
+        represented by the first pair (g, h) of the coset, in the same order as the elements of
+        the direct product G * H, and named "g:h", where the delimiter is the one returned by
+        self.direct_product_delimiter() (":" by default). Both G and H are (isomorphic to) subgroups of
+        the result that commute with each other and generate it, and they intersect in the identified
+        subgroup. If the identification is trivial (the identity of G with the identity of H), then the
+        result is the direct product, G * H.
+
+        Example: the order-16 Pauli group is Z4 ∘ D4, which is also Z4 ∘ Q8, where the element of
+        order 2 in Z4 is identified with the central element of order 2 in D4 (or in Q8).
+
+        If `check` is True (the default), then the identification is verified to be an isomorphism
+        between central subgroups, and a ValueError is raised if it is not. Setting `check` to False
+        skips this verification, and then an invalid identification produces a table that does not
+        define a group, so that make_finite_algebra will most likely complain."""
+        from finalg.make_finite_algebra import make_finite_algebra
+        if not isinstance(other, Group):
+            raise TypeError(f"The other algebra, {getattr(other, 'name', repr(other))}, must be a Group.")
+        g_grp, h_grp = self, other
+
+        # Normalize the identification into a dictionary: theta[a] = the element of H identified with a
+        if isinstance(identification, dict):
+            theta = dict(identification)
+        else:
+            try:
+                g, h = identification
+            except (TypeError, ValueError):
+                raise TypeError("The identification must be either a pair (g, h) of central elements "
+                                "or a dictionary that maps a central subgroup of "
+                                f"{g_grp.name} onto a central subgroup of {h_grp.name}.")
+            if g not in g_grp.elements:
+                raise ValueError(f"'{g}' is not an element of {g_grp.name}.")
+            if h not in h_grp.elements:
+                raise ValueError(f"'{h}' is not an element of {h_grp.name}.")
+            if g_grp.element_order(g) != h_grp.element_order(h):
+                raise ValueError(f"'{g}' and '{h}' cannot be identified, because their orders differ: "
+                                 f"{g_grp.element_order(g)} != {h_grp.element_order(h)}.")
+            theta = dict()
+            x, y = g_grp.identity, h_grp.identity
+            for _ in range(g_grp.element_order(g)):
+                theta[x] = y
+                x, y = g_grp.op(x, g), h_grp.op(y, h)
+
+        if check:
+            if not theta:
+                raise ValueError("The identification is empty.")
+            if not (set(theta.keys()) <= set(g_grp.elements) and set(theta.values()) <= set(h_grp.elements)):
+                raise ValueError(f"The identification must map elements of {g_grp.name} to elements of {h_grp.name}.")
+            for a in theta:
+                if any(g_grp.op(a, x) != g_grp.op(x, a) for x in g_grp.elements):
+                    raise ValueError(f"The element '{a}' is not in the center of {g_grp.name}.")
+            for b in theta.values():
+                if any(h_grp.op(b, y) != h_grp.op(y, b) for y in h_grp.elements):
+                    raise ValueError(f"The element '{b}' is not in the center of {h_grp.name}.")
+            if len(set(theta.values())) != len(theta):
+                raise ValueError("The identification is not one-to-one.")
+            for a, b in it.product(theta, theta):
+                ab = g_grp.op(a, b)
+                if ab not in theta:
+                    raise ValueError(f"The identified elements of {g_grp.name} are not closed under its "
+                                     f"operation: '{a}' * '{b}' = '{ab}'.")
+                if theta[ab] != h_grp.op(theta[a], theta[b]):
+                    raise ValueError("The identification is not a homomorphism.")
+
+        # The (central, hence normal) subgroup N of G * H that is factored out
+        n_subgroup = [(a, h_grp.inv(b)) for a, b in theta.items()]
+
+        # Partition the pairs of the direct product into cosets of N, in direct-product order
+        pairs = list(it.product(g_grp.elements, h_grp.elements))
+        coset_of = dict()  # pair -> index of its coset
+        reps = []          # first pair in each coset
+        for pair in pairs:
+            if pair not in coset_of:
+                for n1, n2 in n_subgroup:
+                    coset_of[(g_grp.op(pair[0], n1), h_grp.op(pair[1], n2))] = len(reps)
+                reps.append(pair)
+
+        table = [[coset_of[(g_grp.op(g1, g2), h_grp.op(h1, h2))] for (g2, h2) in reps]
+                 for (g1, h1) in reps]
+        delimiter = self.direct_product_delimiter()
+        cp_name = name if name else f"{g_grp.name}_cp_{h_grp.name}"
+        cp_description = description if description else f"Central product of {g_grp.name} and {h_grp.name}"
+        return make_finite_algebra(cp_name,
+                                   cp_description,
+                                   [f"{g}{delimiter}{h}" for g, h in reps],
+                                   table)
+
     def inverse_mapping(self):
         """Returns a dictionary that maps each element to its inverse."""
         return self._inverses

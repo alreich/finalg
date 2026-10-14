@@ -18,6 +18,8 @@ __all__ = ["make_finite_algebra",
            "examples",
            "about_subalgebras",
            "find_isomorphic_subalgebra",
+           "small_groups",
+           "identify_small_group",
            "np_arr_to_tuple",
            "cayley_graph_to_json",
            "compress_runs",
@@ -30,6 +32,7 @@ from finalg.cayley_table import make_cayley_table, about_tables
 from finalg.examples import Examples
 from finalg.infix_notation import InfixNotation
 from finalg.about_subalgebras import about_subalgebras, find_isomorphic_subalgebra
+from finalg.small_algebras import small_groups, identify_small_group
 from finalg.algebra_generators import generate_cyclic_group, generate_symmetric_group, generate_powerset_group,\
     generate_commutative_monoid, generate_relative_primes_group, generate_powerset_ring, generate_algebra_mod_n,\
     generate_nxn_matrix_algebra, generate_algebra_from_element_dict, generate_dihedral_group,\

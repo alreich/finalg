@@ -512,7 +512,9 @@ print(Z6.order, S3.order, D6.order)   # ==> 6 6 6
 - **`about_subalgebras.py`.** Free functions (not methods) for summarizing an algebra's
   subalgebras: `partition_into_isomorphic_lists` groups a list of subalgebras (e.g., subgroups)
   into sublists of mutually isomorphic algebras; `about_subalgebras(alg)` computes an algebra's
-  proper subalgebras, partitions them by isomorphism, and prints a readable summary;
+  proper subalgebras, partitions them by isomorphism, and prints a readable summary, which, for
+  subgroups of order 20 or less, also names the small group (see `small_algebras.py`) that each
+  set of isomorphic subgroups is isomorphic to (use `identify_small=False` to leave that out);
   `find_isomorphic_subalgebra` looks up whether a given algebra matches one of the partitions
   found for another algebra.
 
@@ -522,7 +524,23 @@ print(Z6.order, S3.order, D6.order)   # ==> 6 6 6
   partitions = about_subalgebras(V4)
   # Subalgebras of V4 : Klein-4 group
   #   There is 1 unique proper subalgebra, up to isomorphism, out of 3 total subalgebras.
-  #   3 Isomorphic Commutative Normal Groups of order 2 with identity 'e': ...
+  #   3 Isomorphic Commutative Normal Groups of order 2 with identity 'e':
+  #      (each isomorphic to the small group Z2)
+  #         Group: ...
+  ```
+
+- **`small_algebras.py`.** A catalogue of all 54 groups of order 1 through 20, one per isomorphism
+  class, built (once, on first use) from cyclic groups, direct products, the dihedral, dicyclic,
+  and alternating generators, `Group.semidirect_product`, and `Group.central_product`.
+  `small_groups()` returns a dictionary keyed by order, `small_groups(16)` returns the list of the 14
+  groups of order 16, and `identify_small_group(alg)` returns the small group that a given group is
+  isomorphic to (or `None`).
+
+  ```python
+  from finalg import small_groups, identify_small_group, generate_symmetric_group
+
+  [g.name for g in small_groups(8)]                    # ==> ['Z8', 'Z4_x_Z2', 'Z2_x_Z2_x_Z2', 'D4', 'Q8']
+  identify_small_group(generate_symmetric_group(3))    # ==> the small group named 'D3'
   ```
 
 - **`examples.py` — `Examples`.** Loads the built-in example algebras shipped as JSON under

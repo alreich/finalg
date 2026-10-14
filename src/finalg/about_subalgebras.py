@@ -110,8 +110,11 @@ def partition_into_isomorphic_lists(algebras):
     return classes
 
 
-def about_isomorphic_partition(alg, part):
+def about_isomorphic_partition(alg, part, identify_small=True):
     """Print a summary of a particular partition of isomorphic subalgebras of an algebra.
+
+    If identify_small is True (the default) and the subalgebras are groups of order 20 or less, then
+    the summary also names the small group (see finalg.small_algebras) that they are isomorphic to.
     """
     size = len(part)
 
@@ -123,6 +126,15 @@ def about_isomorphic_partition(alg, part):
     sub0 = part[0]
     classname = f"{sub0.__class__.__name__}"
     order = sub0.order
+
+    # If the subalgebras are isomorphic to a small group, then the summary says which one.
+    small_note = ""
+    if identify_small:
+        from finalg.small_algebras import identify_small_group  # Imported here to avoid circular imports
+        small = identify_small_group(sub0)
+        if small is not None:
+            each = "each " if size > 1 else ""
+            small_note = f"   ({each}isomorphic to the small group {small.name})"
 
     comm = "Isomorphic "
     comm1 = ""
@@ -146,18 +158,24 @@ def about_isomorphic_partition(alg, part):
         if identities:
             if single_id:
                 print(f"{size} {comm}{norm}{classname}s of order {order} with identity '{single_id}':")
+                if small_note:
+                    print(small_note)
                 for sub in part:
                     sub_cname = sub.__class__.__name__
                     print(f"      {sub_cname}: {sub.name}: {sub.elements}")
                 print("")
             else:
                 print(f"{size} {comm}{norm}{classname}s of order {order}:")
+                if small_note:
+                    print(small_note)
                 for sub in part:
                     sub_cname = sub.__class__.__name__
                     print(f"      {sub_cname}: {sub.name}: {sub.elements} with identity '{sub.identity}'")
                 print("")
         else:
             print(f"{size} {comm}{norm}{classname}s of order {order}:")
+            if small_note:
+                print(small_note)
             for sub in part:
                 sub_cname = sub.__class__.__name__
                 print(f"      {sub_cname}: {sub.name}: {sub.elements}")
@@ -167,6 +185,8 @@ def about_isomorphic_partition(alg, part):
             print(f"{size} {comm1}{norm}{classname} of order {order} with identity '{sub0.identity}':")
         else:
             print(f"{size} {comm1}{norm}{classname} of order {order}:")
+        if small_note:
+            print(small_note)
         sub0_cname = sub0.__class__.__name__
         print(f"      {sub0_cname}: {sub0.name}: {sub0.elements}\n")
     else:
@@ -192,8 +212,9 @@ def add_s(string, n):
         return string + 's'
 
 
-def about_isomorphic_partitions(alg, partitions):
-    """Print a summary of the isomorphic partitions of an algebra."""
+def about_isomorphic_partitions(alg, partitions, identify_small=True):
+    """Print a summary of the isomorphic partitions of an algebra. If identify_small is True (the default),
+    then each partition of groups of order 20 or less also names the small group it is isomorphic to."""
     if len(partitions) != 0:
         n_subs = reduce(lambda x, y: x + y, [len(p) for p in partitions])
         n_parts = len(partitions)
@@ -203,19 +224,23 @@ def about_isomorphic_partitions(alg, partitions):
         print(what + out_of)
         print(f"  as shown below:\n")
         for partition in partitions:
-            about_isomorphic_partition(alg, partition)
+            about_isomorphic_partition(alg, partition, identify_small)
     else:
         print("There are no proper subalgebras.")
 
 
-def about_subalgebras(alg):
+def about_subalgebras(alg, identify_small=True):
     """A convenience function that finds and summarizes all proper subalgebras
     of the input FiniteAlgebra.  The list of isomorphic partitions is
     returned and a summary of it is printed out.
+
+    If identify_small is True (the default), then, for each set of isomorphic subgroups of
+    order 20 or less, the summary names the small group that they are isomorphic to, e.g., Z4,
+    V4, or D3 (see finalg.small_groups). Set identify_small to False to leave this out.
     """
     alg_subs = alg.proper_subalgebras()
     partitions = partition_into_isomorphic_lists(alg_subs)
-    about_isomorphic_partitions(alg, partitions)
+    about_isomorphic_partitions(alg, partitions, identify_small)
     return partitions
 
 def find_isomorphic_subalgebra(algebra, partitions, verbose=False):

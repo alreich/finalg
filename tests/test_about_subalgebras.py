@@ -7,7 +7,8 @@ import io
 import contextlib
 from unittest import TestCase
 
-from finalg import generate_symmetric_group, generate_cyclic_group
+from finalg import (generate_symmetric_group, generate_cyclic_group, generate_dicyclic_group,
+                    generate_alternating_group, generate_dihedral_group, generate_algebra_mod_n)
 from finalg.about_subalgebras import (
     partition_into_isomorphic_lists,
     about_isomorphic_partition,
@@ -163,3 +164,99 @@ class TestFindIsomorphicSubalgebra(TestCase):
         with contextlib.redirect_stdout(buf):
             find_isomorphic_subalgebra(order2_sub, self.partitions, verbose=True)
         self.assertIn('Checking:', buf.getvalue())
+
+
+def summary(alg, **kwargs):
+    """Return what about_subalgebras prints for alg."""
+    buf = io.StringIO()
+    with contextlib.redirect_stdout(buf):
+        about_subalgebras(alg, **kwargs)
+    return buf.getvalue()
+
+
+class TestSmallGroupNamesInSummary(TestCase):
+    """The summary names the small group that each set of isomorphic subgroups is isomorphic to."""
+
+    def test_s3_subgroups_are_z2_and_z3(self):
+        out = summary(generate_symmetric_group(3))
+        self.assertIn('(each isomorphic to the small group Z2)', out)
+        self.assertIn('(isomorphic to the small group Z3)', out)
+        self.assertEqual(out.count('small group'), 2)
+
+    def test_q8_subgroups_are_z2_and_z4(self):
+        q8, _, _ = generate_dicyclic_group(2)
+        out = summary(q8)
+        self.assertIn('(isomorphic to the small group Z2)', out)
+        self.assertIn('(each isomorphic to the small group Z4)', out)
+        self.assertNotIn('V4', out)
+
+    def test_a4_subgroups_are_z2_z3_and_v4(self):
+        out = summary(generate_alternating_group(4))
+        self.assertIn('(each isomorphic to the small group Z2)', out)
+        self.assertIn('(each isomorphic to the small group Z3)', out)
+        self.assertIn('(isomorphic to the small group V4)', out)
+
+    def test_note_comes_directly_after_the_heading_line(self):
+        lines = summary(generate_symmetric_group(3)).splitlines()
+        for i, line in enumerate(lines):
+            if 'small group' in line:
+                self.assertIn(' of order ', lines[i - 1])
+                self.assertTrue(lines[i + 1].lstrip().startswith('Group:'))
+
+    def test_s4_subgroups_include_d3_d4_and_a4(self):
+        out = summary(generate_symmetric_group(4))
+        for name in ('Z2', 'Z3', 'Z4', 'V4', 'D3', 'D4', 'A4'):
+            self.assertIn(f'the small group {name})', out)
+        self.assertEqual(out.count('small group'), 7)
+
+    def test_dihedral_group_of_order_20_subgroups(self):
+        out = summary(generate_dihedral_group(10)[0])
+        for name in ('Z2', 'V4', 'Z5', 'D5', 'Z10'):
+            self.assertIn(f'the small group {name})', out)
+        self.assertNotIn('Dic', out)
+
+    def test_identify_small_false_leaves_the_notes_out(self):
+        out = summary(generate_symmetric_group(3), identify_small=False)
+        self.assertNotIn('small group', out)
+        self.assertIn('Subalgebras of S3', out)
+
+    def test_about_isomorphic_partition_respects_identify_small(self):
+        s3 = generate_symmetric_group(3)
+        part = [p for p in partition_into_isomorphic_lists(s3.proper_subalgebras()) if len(p) == 3][0]
+        buf = io.StringIO()
+        with contextlib.redirect_stdout(buf):
+            about_isomorphic_partition(s3, part, identify_small=False)
+        self.assertNotIn('small group', buf.getvalue())
+        buf = io.StringIO()
+        with contextlib.redirect_stdout(buf):
+            about_isomorphic_partition(s3, part)
+        self.assertIn('small group Z2', buf.getvalue())
+
+    def test_about_isomorphic_partitions_respects_identify_small(self):
+        s3 = generate_symmetric_group(3)
+        partitions = partition_into_isomorphic_lists(s3.proper_subalgebras())
+        buf = io.StringIO()
+        with contextlib.redirect_stdout(buf):
+            about_isomorphic_partitions(s3, partitions, identify_small=False)
+        self.assertNotIn('small group', buf.getvalue())
+
+    def test_subgroups_of_order_greater_than_20_get_no_note(self):
+        # The proper subgroups of Z42 have orders 2, 3, 6, 7, 14, and 21. Order 21 is too big for the
+        # catalogue of small groups, so only the others are named.
+        out = summary(generate_cyclic_group(42))
+        self.assertIn('of order 21', out)
+        self.assertIn('of order 14', out)
+        self.assertIn('the small group Z14)', out)
+        self.assertNotIn('the small group Z21)', out)
+
+    def test_subalgebras_that_are_not_groups_get_no_note(self):
+        out = summary(generate_algebra_mod_n(4))
+        self.assertNotIn('small group', out)
+
+    def test_return_value_is_unchanged_by_the_note(self):
+        s3 = generate_symmetric_group(3)
+        with contextlib.redirect_stdout(io.StringIO()):
+            with_notes = about_subalgebras(s3)
+            without_notes = about_subalgebras(s3, identify_small=False)
+        self.assertEqual([[g.name for g in p] for p in with_notes],
+                         [[g.name for g in p] for p in without_notes])

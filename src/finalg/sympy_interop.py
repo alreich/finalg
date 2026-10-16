@@ -272,9 +272,8 @@ def to_sympy_permutation_group(finalg_group, verify_order=True):
 
     # SymPy's PermutationGroup doesn't need a *minimal* generating set to compute
     # correctly or efficiently (Schreier-Sims handles redundant generators just
-    # fine), and finding a genuinely minimal one via finalg's own
-    # `_smallest_generating_set` can itself be slow for larger groups -- it's a
-    # combinatorial search unrelated to anything this function otherwise needs.
+    # fine), so there is no need to search for a small one with finalg's own
+    # `_smallest_generating_set`, which has nothing else to do with this function.
     # Since every element's permutation is already on hand, just hand SymPy all
     # of them.
     sympy_group = PermutationGroup(list(perm_of.values()))

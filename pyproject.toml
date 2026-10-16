@@ -37,3 +37,4 @@ where = ["src"]
 
 [tool.setuptools.package-data]
 "finalg.data.algebras" = ["*.json"]
+"finalg.data.small_groups" = ["index.json", "json/*.json"]

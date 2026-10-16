@@ -513,7 +513,7 @@ print(Z6.order, S3.order, D6.order)   # ==> 6 6 6
   subalgebras: `partition_into_isomorphic_lists` groups a list of subalgebras (e.g., subgroups)
   into sublists of mutually isomorphic algebras; `about_subalgebras(alg)` computes an algebra's
   proper subalgebras, partitions them by isomorphism, and prints a readable summary, which, for
-  subgroups of order 20 or less, also names the small group (see `small_algebras.py`) that each
+  subgroups of order 40 or less, also names the small group (see `small_algebras.py`) that each
   set of isomorphic subgroups is isomorphic to (use `identify_small=False` to leave that out);
   `find_isomorphic_subalgebra` looks up whether a given algebra matches one of the partitions
   found for another algebra.
@@ -529,17 +529,18 @@ print(Z6.order, S3.order, D6.order)   # ==> 6 6 6
   #         Group: ...
   ```
 
-- **`small_algebras.py`.** A catalogue of all 54 groups of order 1 through 20, one per isomorphism
-  class, built (once, on first use) from cyclic groups, direct products, the dihedral, dicyclic,
-  and alternating generators, `Group.semidirect_product`, and `Group.central_product`.
+- **`small_algebras.py`.** A catalogue of all 181 groups of order 1 through 40, one per isomorphism
+  class, loaded (once, on first use) from the pretty-printed JSON files in the package data
+  `finalg/data/small_groups` (see the notebooks in `notebooks/small_groups` for how each group is built).
   `small_groups()` returns a dictionary keyed by order, `small_groups(16)` returns the list of the 14
-  groups of order 16, and `identify_small_group(alg)` returns the small group that a given group is
-  isomorphic to (or `None`).
+  groups of order 16, listed in the order of GAP's SmallGroup library, and `identify_small_group(alg)`
+  returns the small group that a given group is isomorphic to (or `None`). `load_group` and
+  `load_groups` load single groups or many groups by name or by SmallGroup id, e.g. `load_group((8, 4))`.
 
   ```python
   from finalg import small_groups, identify_small_group, generate_symmetric_group
 
-  [g.name for g in small_groups(8)]                    # ==> ['Z8', 'Z4_x_Z2', 'Z2_x_Z2_x_Z2', 'D4', 'Q8']
+  [g.name for g in small_groups(8)]                    # ==> ['Z8', 'Z4_x_Z2', 'D4', 'Q8', 'Z2_x_Z2_x_Z2']
   identify_small_group(generate_symmetric_group(3))    # ==> the small group named 'D3'
   ```
 

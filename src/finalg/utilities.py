@@ -5,6 +5,7 @@
 import numpy as np
 import networkx as nx
 import itertools as it
+import json
 from collections import Counter
 import re
 
@@ -149,6 +150,102 @@ def compress_runs(s: str) -> str:
             return f'{char}^{n}'
 
     return re.sub(r'(.)\1*', replace_run, s)
+
+
+# ── Helpers for building groups and writing them as pretty-printed JSON ────────
+# (Used, e.g., by the notebooks in notebooks/small_groups.)
+
+def mult_action(modulus, k):
+    """The action of Z_m on Z_modulus (elements are strings of integers) in which h acts by
+    x -> k^h * x (mod modulus). Use with ``Group.semidirect_product``."""
+    return lambda h, x: str((int(x) * pow(k, int(h), modulus)) % modulus)
+
+
+def _extend_hom(N, gen_images):
+    """Extend {generator: image} to a map on all of N by f(a*g) = f(a)*f(g)."""
+    if not gen_images:
+        return {n: n for n in N.elements}                 # no images given: the identity automorphism
+    f = {N.identity: N.identity}
+    f.update(gen_images)
+    queue = list(f)
+    while queue:
+        a = queue.pop()
+        for g, img in gen_images.items():
+            p = N.op(a, g)
+            if p not in f:
+                f[p] = N.op(f[a], img)
+                queue.append(p)
+    return f
+
+
+def action_from_generators(N, H, images):
+    """Build an action of the group H on the group N by automorphisms, from generators.
+
+    `images` maps each of a set of generators of H to a dictionary {n_gen: image, ...} that says where the
+    corresponding automorphism of N sends a set of generators of N (an empty dictionary means that the
+    H-generator acts trivially). The result is a dictionary {h: {n: phi_h(n)}} that covers every element
+    h of H and n of N, ready to be passed to ``N.semidirect_product(H, action)``, which verifies that it
+    really is a homomorphism from H into the automorphisms of N."""
+    identity_map = {n: n for n in N.elements}
+    gen_autos = {h: _extend_hom(N, imgs) for h, imgs in images.items()}
+    phi = {H.identity: identity_map}
+    queue = [H.identity]
+    while queue:
+        h = queue.pop()
+        for g, auto in gen_autos.items():
+            hg = H.op(h, g)
+            if hg not in phi:
+                phi[hg] = {n: phi[h][auto[n]] for n in N.elements}     # phi_(hg) = phi_h o phi_g
+                queue.append(hg)
+    if len(phi) != H.order:
+        raise ValueError(f"The generators given for {H.name} generate only {len(phi)} of its {H.order} elements.")
+    return phi
+
+
+# ----------------------------------------------------------------------------------------
+#  Pretty JSON
+# ----------------------------------------------------------------------------------------
+
+def _wrapped_list(items, indent, width):
+    """JSON-encode a list of scalars on as few lines as fit within `width` columns."""
+    pieces = [json.dumps(x, ensure_ascii=False) for x in items]
+    one_line = '[' + ', '.join(pieces) + ']'
+    if indent + len(one_line) <= width:
+        return one_line
+    lines, current = [], ''
+    for p in pieces:
+        candidate = (current + ', ' + p) if current else p
+        if current and indent + 2 + len(candidate) + 1 > width:
+            lines.append(current + ',')
+            current = p
+        else:
+            current = candidate
+    lines.append(current)
+    pad = ' ' * (indent + 2)
+    return '[\n' + '\n'.join(pad + ln for ln in lines) + '\n' + ' ' * indent + ']'
+
+
+def pretty_json(d, width=100):
+    """Return the JSON text for an algebra dictionary (from ``alg.to_dict()``), laid out like the example
+    files in finalg/data/algebras: one key per line, the elements wrapped to `width` columns, and one
+    row of each Cayley table per line."""
+    parts = []
+    for key, value in d.items():
+        k = json.dumps(key)
+        if key in ('table', 'table2'):
+            rows = ',\n'.join('    ' + json.dumps(list(r)) for r in value)
+            parts.append(f'  {k}: [\n{rows}\n  ]')
+        elif key == 'elements':
+            parts.append(f'  {k}: ' + _wrapped_list(list(value), 2, width))
+        else:
+            parts.append(f'  {k}: ' + json.dumps(value, ensure_ascii=False))
+    return '{\n' + ',\n'.join(parts) + '\n}\n'
+
+
+def dump_pretty(alg, path, width=100):
+    """Write an algebra to `path` as pretty-printed JSON that ``make_finite_algebra(path)`` can read back."""
+    with open(path, 'w', encoding='utf-8') as fout:
+        fout.write(pretty_json(alg.to_dict(), width))
 
 
 # ── Demo ──────────────────────────────────────────────────────────────────────

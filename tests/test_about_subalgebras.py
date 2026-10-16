@@ -240,14 +240,18 @@ class TestSmallGroupNamesInSummary(TestCase):
             about_isomorphic_partitions(s3, partitions, identify_small=False)
         self.assertNotIn('small group', buf.getvalue())
 
-    def test_subgroups_of_order_greater_than_20_get_no_note(self):
-        # The proper subgroups of Z42 have orders 2, 3, 6, 7, 14, and 21. Order 21 is too big for the
-        # catalogue of small groups, so only the others are named.
+    def test_subgroups_of_order_greater_than_40_get_no_note(self):
+        # The proper subgroups of Z82 have orders 2 and 41, so order 41 is too big for the catalogue of
+        # small groups, but order 2 is not.
+        out = summary(generate_cyclic_group(82))
+        self.assertIn('of order 41', out)
+        self.assertNotIn('the small group Z41)', out)
+        self.assertIn('the small group Z2)', out)
+
+    def test_subgroups_of_order_21_are_named_now(self):
         out = summary(generate_cyclic_group(42))
-        self.assertIn('of order 21', out)
-        self.assertIn('of order 14', out)
+        self.assertIn('the small group Z21)', out)
         self.assertIn('the small group Z14)', out)
-        self.assertNotIn('the small group Z21)', out)
 
     def test_subalgebras_that_are_not_groups_get_no_note(self):
         out = summary(generate_algebra_mod_n(4))

@@ -2,7 +2,7 @@
 #
 # Usage, in GAP:
 #
-#     gap> Read("gap_to_finalg.g");
+#     gap> Read("tools/gap_to_finalg.g");      # from the root of the finalg repo
 #     gap> FinalgJSON(SmallGroup(32, 8), "SG32_8",
 #                     "GAP SmallGroup(32,8): C2 . ((C4 x C2) : C2)", "G32_08_SG32_8.json");
 #

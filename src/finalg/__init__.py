@@ -24,7 +24,16 @@ __all__ = ["make_finite_algebra",
            "cayley_graph_to_json",
            "compress_runs",
            "from_sympy_permutation_group",
-           "to_sympy_permutation_group"
+           "to_sympy_permutation_group",
+           "automorphisms",
+           "inner_automorphisms",
+           "automorphism_group",
+           "valid_extension_data",
+           "reduce_by_conjugacy",
+           "build_cyclic_extension",
+           "cyclic_extensions",
+           "relabel_group",
+           "groups_of_order"
 ]
 
 from finalg.make_finite_algebra import make_finite_algebra
@@ -40,6 +49,9 @@ from finalg.algebra_generators import generate_cyclic_group, generate_symmetric_
 from finalg.utilities import np_arr_to_tuple, cayley_graph_to_json, compress_runs
 from finalg.permutation import Perm
 from finalg.sympy_interop import from_sympy_permutation_group, to_sympy_permutation_group
+from finalg.group_construction import automorphisms, inner_automorphisms, automorphism_group, \
+    valid_extension_data, reduce_by_conjugacy, build_cyclic_extension, cyclic_extensions, relabel_group, \
+    groups_of_order
 
 from importlib import resources
 

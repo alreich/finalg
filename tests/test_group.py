@@ -406,3 +406,66 @@ class TestCentralProduct(TestCase):
     def test_other_must_be_a_group(self):
         with self.assertRaises(TypeError):
             self.z4.central_product('not a group', ('2', 'r^2'))
+
+
+class TestAutomorphismAndExtensionMethods(TestCase):
+    """The Group methods that wrap finalg.group_construction."""
+
+    def setUp(self):
+        from finalg.small_algebras import small_groups
+        self.small = lambda order, name: next(g for g in small_groups(order) if g.name == name)
+
+    def test_automorphisms_and_inner_automorphisms(self):
+        q8 = self.small(8, 'Q8')
+        self.assertEqual(len(q8.automorphisms()), 24)
+        self.assertEqual(len(q8.inner_automorphisms()), 4)
+        self.assertTrue(set(q8.inner_automorphisms()) <= set(q8.automorphisms()))
+
+    def test_methods_agree_with_the_module_functions(self):
+        import finalg.group_construction as gc
+        d4 = self.small(8, 'D4')
+        self.assertEqual(d4.automorphisms(), gc.automorphisms(d4))
+        self.assertEqual(d4.inner_automorphisms(), gc.inner_automorphisms(d4))
+        self.assertEqual(d4.automorphism_group().table, gc.automorphism_group(d4).table)
+        self.assertEqual([g.table for g in d4.cyclic_extensions(2)],
+                         [g.table for g in gc.cyclic_extensions(d4, 2)])
+
+    def test_automorphism_group(self):
+        q8 = self.small(8, 'Q8')
+        aut = q8.automorphism_group()
+        self.assertIsInstance(aut, Group)
+        self.assertEqual(aut.name, 'Aut(Q8)')
+        self.assertTrue(aut.fast_isomorphic(generate_symmetric_group(4)))
+
+    def test_automorphism_group_return_maps_and_max_order(self):
+        s3 = generate_symmetric_group(3)
+        aut, maps = s3.automorphism_group(return_maps=True)
+        self.assertEqual(len(maps), aut.order)
+        self.assertEqual(maps[0], tuple(range(6)))
+        with self.assertRaises(ValueError):
+            s3.automorphism_group(max_order=5)
+
+    def test_cyclic_extensions(self):
+        z4 = generate_cyclic_group(4)
+        extensions = z4.cyclic_extensions(2)
+        self.assertEqual(len(extensions), 4)
+        for g in extensions:
+            self.assertIsInstance(g, Group)
+            self.assertEqual(g.order, 8)
+        names = {s.name for s in (self.small(8, n) for n in ('Z8', 'Z4_x_Z2', 'D4', 'Q8'))
+                 if any(g.fast_isomorphic(s) for g in extensions)}
+        self.assertEqual(names, {'Z8', 'Z4_x_Z2', 'D4', 'Q8'})
+
+    def test_cyclic_extensions_return_data(self):
+        z4 = generate_cyclic_group(4)
+        for g, alpha, c in z4.cyclic_extensions(2, return_data=True):
+            self.assertIsInstance(g, Group)
+            self.assertEqual(len(alpha), 4)
+            self.assertIn(c, range(4))
+
+    def test_methods_on_a_ring_refer_to_the_additive_group(self):
+        from finalg import generate_algebra_mod_n
+        z5_ring = generate_algebra_mod_n(5)
+        # The additive group of Z5 is cyclic of order 5, whose automorphism group has order 4
+        self.assertEqual(len(z5_ring.automorphisms()), 4)
+        self.assertEqual(z5_ring.automorphism_group().order, 4)

@@ -210,6 +210,54 @@ class Group(Monoid):
                                    [f"{g}{delimiter}{h}" for g, h in reps],
                                    table)
 
+    def automorphisms(self):
+        """Return a list of all of the automorphisms of this group, each one a tuple f, where f[i] is
+        the index, in self.elements, of the image of the element with index i.
+
+        See finalg.group_construction.automorphisms. This is fast if the number of automorphisms is
+        up to the tens of thousands, but it is not meant for groups like Z2^5, which has almost 10 million.
+
+        Note: A Ring (and so a Field) is a Group under addition, and, like the other Group methods, this
+        one and the three that follow (`inner_automorphisms`, `automorphism_group` and `cyclic_extensions`)
+        apply to the additive group. For a Ring, they do not give ring automorphisms, only the automorphisms
+        of its additive group."""
+        from finalg.group_construction import automorphisms as _automorphisms
+        return _automorphisms(self)
+
+    def inner_automorphisms(self):
+        """Return a sorted list of the distinct inner automorphisms of this group (conjugation by an
+        element), as tuples of indices, in the same form as `automorphisms`."""
+        from finalg.group_construction import inner_automorphisms as _inner_automorphisms
+        return _inner_automorphisms(self)
+
+    def automorphism_group(self, max_order=2000, return_maps=False):
+        """Return the automorphism group of this group, as a Group whose elements are named 'f0' (the
+        identity), 'f1', 'f2', ..., and whose product is composition: f_i * f_j = f_i o f_j.
+
+        If `return_maps` is True, then the list of automorphisms that the names stand for (tuples of
+        indices, as returned by `automorphisms`) is returned as well, as a second value, so that 'f<k>' is
+        the k-th item in the list. A ValueError is raised if the automorphism group has more than
+        `max_order` elements, because its Cayley table would be too big.
+
+        See finalg.group_construction.automorphism_group."""
+        from finalg.group_construction import automorphism_group as _automorphism_group
+        return _automorphism_group(self, max_order=max_order, return_maps=return_maps)
+
+    def cyclic_extensions(self, m, return_data=False):
+        """Return a list of all of the groups G, up to isomorphism, that contain this group, N, as a normal
+        subgroup, with G/N cyclic of order m; i.e., the cyclic extensions of N by Z_m. Each one is
+        G = <N, t>, where t^m = c is in N, and conjugation by t is an automorphism alpha of N, such that
+        alpha(c) = c and alpha^m is conjugation by c. If c is the identity, G is the semidirect product of N
+        by Z_m (see `semidirect_product`); otherwise, G is a non-split extension (e.g., Q8 is an extension
+        of Z4 by Z2). The elements of G are named 'x:i', which stands for x t^i, for x in N and 0 <= i < m.
+
+        If `return_data` is True, then a list of triples (G, alpha, c) is returned instead, where alpha is a
+        tuple of indices and c is an index into self.elements.
+
+        See finalg.group_construction.cyclic_extensions."""
+        from finalg.group_construction import cyclic_extensions as _cyclic_extensions
+        return _cyclic_extensions(self, m, return_data=return_data)
+
     def inverse_mapping(self):
         """Returns a dictionary that maps each element to its inverse."""
         return self._inverses

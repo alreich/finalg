@@ -55,6 +55,19 @@ class TestStarImportExposesPublicApi(TestCase):
 
         self.assertGreater(len(ns['examples']), 0)
 
+    def test_group_construction_names_are_exported(self):
+        ns = {}
+        exec("from finalg import *", ns)
+        for name in ("automorphisms", "inner_automorphisms", "automorphism_group", "valid_extension_data",
+                     "reduce_by_conjugacy", "build_cyclic_extension", "cyclic_extensions", "relabel_group",
+                     "groups_of_order"):
+            self.assertIn(name, ns)
+        z5 = ns['generate_cyclic_group'](5)
+        self.assertEqual(len(ns['automorphisms'](z5)), 4)
+        self.assertEqual(ns['automorphism_group'](z5).order, 4)
+        self.assertEqual(len(ns['groups_of_order'](6)), 2)
+        self.assertEqual(len(ns['cyclic_extensions'](ns['generate_cyclic_group'](3), 2)), 2)
+
     def test_all_names_are_importable(self):
         import finalg
         for name in finalg.__all__:

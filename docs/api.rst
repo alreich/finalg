@@ -67,6 +67,9 @@ Construction & utilities
 .. automodule:: finalg.algebra_generators
    :members:
 
+.. automodule:: finalg.group_construction
+   :members:
+
 .. automodule:: finalg.about_subalgebras
    :members:
 

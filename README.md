@@ -1,16 +1,18 @@
 # Finite Abstract Algebras (finalg)
 
-Finite abstract algebras in Python - groups, rings, fields, vector spaces, etc.
-
-*(This is a continuation of the now archived repo, https://github.com/alreich/abstract_algebra)*
+    Finite abstract algebras in Python: groups, rings, fields, vector spaces, etc.
 
 **finalg** is a Python package for constructing and exploring **finite abstract algebras** —
 Magmas, Semigroups, Monoids, Groups, Quasigroups, Loops, Rings, Fields, Modules, and Vector
 Spaces — using explicit **Cayley (multiplication) tables**. It is aimed at hands-on exploration
-of abstract algebra: building small algebras by hand or by generator function, inspecting their
-properties (associativity, commutativity, identities, inverses, generators, subalgebras, ...),
-combining them (direct products, quotient groups, Cayley–Dickson construction), and representing
-them in other forms (regular representations, abstract matrices, Cayley diagrams).
+of abstract algebra: 
+
+* building small algebras by hand or by generator function,
+* inspecting their properties (associativity, commutativity, identities, inverses, generators, subalgebras, ...),
+* combining them (direct, semidirect and central products, quotient groups, cyclic extensions,
+  Cayley–Dickson construction),
+* looking up any group of order 1 to 40 in a built-in catalogue, and
+* representing them in other forms (regular representations, abstract matrices, Cayley diagrams).
 
 - Source: <https://github.com/alreich/finalg>
 - Documentation: <https://finalg.readthedocs.io/en/latest/>
@@ -29,49 +31,45 @@ them in other forms (regular representations, abstract matrices, Cayley diagrams
 - [The Cayley–Dickson Construction](#the-cayley-dickson-construction)
 - [Modules and Vector Spaces](#modules-and-vector-spaces)
 - [Automatically Generating Algebras](#automatically-generating-algebras)
+- [Constructing Groups from Smaller Groups](#constructing-groups-from-smaller-groups)
+- [The Catalogue of Small Groups](#the-catalogue-of-small-groups)
 - [Supporting Modules](#supporting-modules)
 - [Repository Layout](#repository-layout)
 - [References](#references)
 
 ## Core Ideas
 
-- Every algebra's elements are **strings**. This keeps algebras easy to read, print, and
-  serialize, and lets element names carry meaning (e.g., permutations in cycle notation,
-  cosets prefixed with `~`, direct-product elements joined with a delimiter like `e:a`).
-- Every algebra with a single binary operation is backed by a **Cayley table**: an NxN table
-  (`N` = number of elements) where entry `(row, col)` gives the result of applying the operator
-  to the row element and the column element, in that order (`row * col`). Rings and Fields carry
-  a second Cayley table for their second operator.
-- Properties like associativity, commutativity, identity, and inverses are **derived entirely
-  from the table(s)**, not asserted by the class. Creating an algebra with `make_finite_algebra`
-  inspects the table and returns the most specific class the table supports.
-- All of an algebra's structural and single-element-set classes ultimately share one abstract
-  base, `FiniteAlgebra`. Multi-element-set algebras (Modules, Vector Spaces) share a separate
-  base, `FiniteCompositeAlgebra`.
+* Every algebra's elements are **strings**. This keeps algebras easy to read, print, and serialize, and lets element names carry meaning (e.g., permutations in cycle notation, cosets prefixed with `~`, direct-product elements joined with a delimiter like `e:a`).
+
+* Every algebra has `N` elements (strings) stored in a tuple, and a binary operation over the elements, backed by an NxN table of integers (a **Cayley table**), where `table[row, col]` provides the index (position) in the tuple of elements of the result of applying the operator to the `row` element and the `col`umn element, in that order (`row * col`). Rings and Fields include a second Cayley table for their second operator (`mul`).
+
+* Properties such as associativity, commutativity, identity, and inverses are **derived entirely from the table(s)**, not asserted by the class. Creating an algebra with **`make_finite_algebra`** inspects the table and returns the most specific class the table supports, such as `Group`, `Ring`, `Field`, etc.
+
+* All of an algebra's structural and single-element-set classes ultimately share one abstract base, `FiniteAlgebra`. Multi-element-set algebras (Modules, Vector Spaces) share a separate base, `FiniteCompositeAlgebra`.
 
 ## The Algebra Class Hierarchy
 
 ```
-FiniteAlgebra (ABC)
-└── Magma
-    ├── Semigroup
-    │   └── Monoid
-    │       └── Group
-    │           └── Ring
-    │               └── Field
-    └── Quasigroup
-        └── Loop
+FiniteAlgebra (ABC - abstract base class)
+└── Magma --------------------- Has a closed, binary operator (op)
+    ├── Semigroup ------------- The binary op is also associative
+    │   └── Monoid ------------ It has an identity element
+    │       └── Group --------- Every element has an inverse element)
+    │           └── Ring ------ Has a second closed, associative binary op
+    │               └── Field - Second op has identity element  & inverses
+    └── Quasigroup ------------ Has cancellation property
+        └── Loop -------------- Has an identity element, but is not associative
 
 FiniteCompositeAlgebra (ABC)
-└── Module
-    └── VectorSpace
+└── Module -------------------- A Ring (scalars) & abelian Group (vectors) with scalar * vector op
+    └── VectorSpace ----------- Like a Module, but replace Ring with Field
 
-NDimensionalModule(Module)         # constructed directly from a Ring
-NDimensionalVectorSpace(VectorSpace)  # constructed directly from a Field
+NDimensionalModule(Module)            # A Ring (scalars) with n-fold direct product of a Ring (vectors)
+NDimensionalVectorSpace(VectorSpace)  # Lide a NDimensionalModule, but replace Ring with Field
 ```
 
 `FiniteAlgebra` and `FiniteCompositeAlgebra` are not intended to be instantiated directly; the
-highest classes in each hierarchy meant for direct use are `Magma` and `Module`/`VectorSpace`,
+highest classes in each hierarchy meant for direct use are `Magma` and `Module`,
 respectively.
 
 The general design strategy is to place each method **as high in the hierarchy as its
@@ -91,17 +89,7 @@ necessarily being associative, and a `Loop` is a `Quasigroup` that also has an i
 Constructors for the individual classes exist but are **not meant to be called directly**.
 Instead, use the single factory function `make_finite_algebra` (see
 [Creating Algebras](#creating-algebras)), which inspects the input table(s) and returns an
-instance of the most specific applicable class:
-
-| Table 1 property | Table 2? | Result |
-|---|---|---|
-| Not associative, no cancellation | — | `Magma` |
-| Not associative, cancellation, no identity | — | `Quasigroup` |
-| Not associative, cancellation, identity | — | `Loop` |
-| Associative, no identity | — | `Semigroup` |
-| Associative, identity, no inverses | — | `Monoid` |
-| Associative, identity, inverses | No | `Group` |
-| Associative, identity, inverses | Yes, associative & distributive | `Ring` (or `Field`, if elements minus the additive identity form a commutative multiplicative group) |
+instance of the most specific applicable class.
 
 ## Elements, Cayley Tables, and Operators
 
@@ -141,6 +129,178 @@ print(table.type_of_algebra())  # ==> 'Group'
 elements = ('e', 'h', 'v', 'r')
 op = FiniteOperator(elements, 'e', table)
 print(op('h', 'v'))             # ==> 'r'
+```
+
+
+```python
+>>> import finalg as fg
+```
+
+    Finite Algebras:
+      To see a listing of built-in example algebras, run finalg.examples.about()
+      To retrieve an example algebra, use finalg.examples[INDEX]
+    
+
+
+
+```python
+>>> v4 = fg.make_finite_algebra('V4',
+>>>                             'Klein-4 Group',
+>>>                             ('e', 'h', 'v', 'r'),
+>>>                             [['e', 'h', 'v', 'r'],
+>>>                              ['h', 'e', 'r', 'v'],
+>>>                              ['v', 'r', 'e', 'h'],
+>>>                              ['r', 'v', 'h', 'e']])
+>>> v4
+```
+
+
+
+
+    Group(
+    'V4',
+    'Klein-4 Group',
+    ('e', 'h', 'v', 'r'),
+    [[0, 1, 2, 3], [1, 0, 3, 2], [2, 3, 0, 1], [3, 2, 1, 0]]
+    )
+
+
+
+
+```python
+>>> v4.about()
+```
+
+    
+    ** Group **
+    Name: V4
+    Instance ID: 5008559440
+    Description: Klein-4 Group
+    Order: 4
+    Identity: 'e'
+    Commutative? Yes
+    Cyclic?: No
+    Elements:
+       Index   Name   Inverse  Order
+          0     'e'     'e'       1
+          1     'h'     'h'       2
+          2     'v'     'v'       2
+          3     'r'     'r'       2
+    Cayley Table (showing indices):
+    [[0, 1, 2, 3], [1, 0, 3, 2], [2, 3, 0, 1], [3, 2, 1, 0]]
+
+
+
+
+
+    '<Group:V4, ID:5008559440>'
+
+
+
+
+```python
+>>> v4.op('h', 'v')
+```
+
+
+
+
+    'r'
+
+
+
+
+```python
+>>> with fg.InfixNotation(v4) as v:
+>>>     print(f"{v['h'] + v['v'] = }")
+```
+
+    v['h'] + v['v'] = r
+
+
+
+```python
+>>> z2 = fg.generate_cyclic_group(2)
+>>> z2.about()
+```
+
+    
+    ** Group **
+    Name: Z2
+    Instance ID: 5008282192
+    Description: Autogenerated cyclic group of order 2
+    Order: 2
+    Identity: '0'
+    Commutative? Yes
+    Cyclic?: Yes
+    Generators: ['1']
+    Elements:
+       Index   Name   Inverse  Order
+          0     '0'     '0'       1
+          1     '1'     '1'       2
+    Cayley Table (showing indices):
+    [[0, 1], [1, 0]]
+
+
+
+
+
+    '<Group:Z2, ID:5008282192>'
+
+
+
+
+```python
+>>> z2sqr = z2 * z2
+>>> z2sqr.about()
+```
+
+    
+    ** Group **
+    Name: Z2_x_Z2
+    Instance ID: 5008282576
+    Description: Direct product of Z2 & Z2
+    Order: 4
+    Identity: '0:0'
+    Commutative? Yes
+    Cyclic?: No
+    Elements:
+       Index   Name   Inverse  Order
+          0   '0:0'   '0:0'       1
+          1   '0:1'   '0:1'       2
+          2   '1:0'   '1:0'       2
+          3   '1:1'   '1:1'       2
+    Cayley Table (showing indices):
+    [[0, 1, 2, 3], [1, 0, 3, 2], [2, 3, 0, 1], [3, 2, 1, 0]]
+
+
+
+
+
+    '<Group:Z2_x_Z2, ID:5008282576>'
+
+
+
+
+```python
+v4.isomorphic(z2sqr)
+```
+
+
+
+
+    {'h': '0:1', 'v': '1:0', 'r': '1:1', 'e': '0:0'}
+
+
+
+
+```python
+
+```
+
+
+```python
+
 ```
 
 ## Creating Algebras
@@ -197,6 +357,11 @@ An algebra can be serialized with `to_dict()`, `dumps()` (JSON string), or `dump
 (JSON file), and reconstructed by passing that dictionary, string, or filename back into
 `make_finite_algebra`. `Module` and `VectorSpace` (and their N-dimensional subclasses) do not
 currently have a serialized form.
+
+`dump` writes the whole dictionary on a single line. For anything bigger than a very small algebra,
+`finalg.utilities.dump_pretty(alg, path)` is easier to read: it writes the same dictionary with one
+Cayley-table row per line (this is the layout of the files in the
+[catalogue of small groups](#the-catalogue-of-small-groups)).
 
 `Module`/`VectorSpace` objects instead have an in-memory representation of five components:
 `name`, `description`, a `Ring`/`Field` of scalars, a `Group` of vectors, and a scalar-vector
@@ -273,7 +438,11 @@ print(q.name, q.elements)         # ==> V4/V4_sub ('~e', '~v')  (representative 
 the broadest set of structural tools, available to every algebra below it:
 - direct products (`*`, `**`), element powers (`element_to_power`), reordering elements
   (`reorder_elements`)
-- isomorphism checking (`isomorphic`, `is_isomorphic_mapping`, `make_element_mappings`)
+- isomorphism checking (`fast_isomorphic`, `isomorphic`, `is_isomorphic_mapping`,
+  `make_element_mappings`). `isomorphic` tries every bijection of the elements, which is hopeless
+  beyond order 8 or so; `fast_isomorphic` compares invariants of the elements first and then only
+  tries images of a small generating set, so use it in practice. Both return the element mapping (a
+  `dict`) if the algebras are isomorphic; otherwise `fast_isomorphic` returns `False`.
 - closure, subset/subalgebra discovery (`closure`, `closed_subsets_of_elements`,
   `subalgebra_from_elements`, `proper_subalgebras`)
 - generators (`generators`, `is_cyclic`, `generates`, `get_single_generator_set`)
@@ -317,6 +486,10 @@ print(mapping['h'])
 - solvability (`is_solvable`)
 - normal subgroup testing, subgroup enumeration (up to isomorphism), and quotient groups
   (`is_normal`, `subgroups`, `unique_proper_subgroups`, `quotient_group`, `/`)
+- building new groups from old ones: semidirect and central products, automorphisms, and cyclic
+  extensions (`semidirect_product`, `central_product`, `automorphisms`, `inner_automorphisms`,
+  `automorphism_group`, `cyclic_extensions`), described in
+  [Constructing Groups from Smaller Groups](#constructing-groups-from-smaller-groups)
 
 ```python
 print(V4.is_solvable())           # ==> True (every group of order 4 is solvable)
@@ -361,7 +534,7 @@ R6 = generate_algebra_mod_n(6)   # 6 is not prime ==> Ring
 print(type(R6).__name__, R6.zero_divisors())  # ==> Ring ['2', '3', '4']
 ```
 
-## The Cayley–Dickson Construction
+## The Cayley Dickson Construction
 
 `Ring.make_cayley_dickson_algebra(mu=None, version=1)` builds a new `Ring`/`Field` of twice the
 dimension of the original, using elements that are pairs `(a, b)` (named `"a:b"`) and one of
@@ -462,20 +635,223 @@ algebras of a given order without hand-writing a Cayley table:
 | `generate_algebra_mod_n(n, ...)`                                 | Ring (or, if `n` is prime, Field) of integers mod `n`                                                                                                                                                                                                                                                                                                       |
 | `generate_nxn_matrix_algebra(ring, ...)`                         | Ring of 2x2 abstract matrices over a given `Ring` (currently hardcoded to 2x2, though `AbstractMatrix` itself supports arbitrary square shapes)                                                                                                                                                                                                             |
 | `generate_dihedral_group(n, ...)`                                | Dihedral group of order `2n`, built from rotation/flip permutation generators                                                                                                                                                                                                                                                                               |
+| `generate_dicyclic_group(n, ...)`                                | Dicyclic (binary dihedral) group `Dic_n` of order `4n`, for `n >= 2`. `Dic2` is the quaternion group `Q8`, and, when `n` is a power of 2, the result is a generalized quaternion group (`Q16`, `Q32`, ...). Elements are named `e`, `a`, `a^2`, ..., `x`, `ax`, `a^2x`, ..., and the table is computed directly from the relations `a^(2n) = 1`, `x^2 = a^n`, `x^-1 a x = a^-1`|
 | `generate_algebra_from_element_dict(gen_elem_dict, bin_op, ...)` | General-purpose: closes a dictionary of named generator elements (of *any* type with a defined `bin_op`) under that operation, then builds the corresponding algebra. More flexible than the others, at the cost of requiring more input (a binary operation, an equality test, and functions for making values hashable and for naming generated elements) |
 
 `generate_dihedral_group` is itself implemented on top of `generate_algebra_from_element_dict`,
 using `Perm` rotation/flip generators, then relabels elements with `compress_runs` (e.g.
-`"ffrrrf"` → `"f^2r^3f"`) for readability.
+`"ffrrrf"` → `"f^2r^3f"`) for readability. `generate_dicyclic_group` takes a different route: its
+elements are the pairs `a^k x^j`, so the Cayley table is computed straight from the multiplication
+rule, without closing a set of generators. Both functions return a triple, `(group, element_dict,
+iterations)`, where `element_dict` maps element names to the objects behind them (permutations or
+exponent pairs), and `iterations` is the number of closure passes that were needed.
 
 ```python
-from finalg import generate_cyclic_group, generate_symmetric_group, generate_dihedral_group
+from finalg import generate_cyclic_group, generate_symmetric_group, generate_dihedral_group, \
+    generate_dicyclic_group
 
 Z6 = generate_cyclic_group(6)
 S3 = generate_symmetric_group(3)
 D6, elem_dict, iterations = generate_dihedral_group(3)   # dihedral group of order 6
 print(Z6.order, S3.order, D6.order)   # ==> 6 6 6
+
+Q8, elem_dict, _ = generate_dicyclic_group(2)             # the quaternion group, of order 8
+print(Q8.name, Q8.order, list(elem_dict)[:4])             # ==> Q8 8 ['e', 'a', 'a^2', 'a^3']
 ```
+
+The generators build one named family at a time. To build groups *out of other groups* (direct,
+semidirect and central products, and extensions), see
+[Constructing Groups from Smaller Groups](#constructing-groups-from-smaller-groups); to retrieve any
+group of order 40 or less by name, see [The Catalogue of Small Groups](#the-catalogue-of-small-groups);
+and to import a group from SymPy, see `sympy_interop.py` under [Supporting Modules](#supporting-modules).
+
+## Constructing Groups from Smaller Groups
+
+The generators above build one named family at a time. This section is about building a group *out
+of other groups*, which is how most of the groups of small order arise. Several of the families above
+are special cases: the dihedral group `D_n` is the semidirect product of `Z_n` by `Z_2`, and the
+dicyclic group `Dic_n` is a non-split extension of `Z_2n` by `Z_2`. The products are `Group` methods
+(`group.py`); the extensions and the machinery behind them are in `group_construction.py`, whose
+functions `automorphisms`, `inner_automorphisms`, `automorphism_group` and `cyclic_extensions` are also
+available as `Group` methods.
+
+### Direct, semidirect, and central products
+
+The direct product is `*` (see [Algebra-Level Operators](#algebra-level-operators-direct-products-and-quotients)).
+Two more products are `Group` methods:
+
+- **`N.semidirect_product(H, action, name=None, description=None, check=True)`** builds `N ⋊ H`, in which `H`
+  acts on `N` by automorphisms. The `action` is a function `action(h, n)`, or a dictionary that gives the
+  automorphism for each `h` (as a dictionary or as a function). The elements are the pairs `n:h`, in the same
+  order as in the direct product, and, unless `check=False`, the action is verified to be a homomorphism
+  from `H` into the automorphisms of `N`, so a wrong action raises an error instead of producing a wrong
+  group. Two helpers in `utilities.py` write actions for you: `mult_action(m, k)` is the action on `Z_m`
+  in which an element `h` of a cyclic group multiplies by `k^h` (mod `m`), and
+  `action_from_generators(N, H, images)` extends the images of the generators of `H` (each given as a
+  dictionary of images of generators of `N`) to a whole action.
+- **`G.central_product(H, identification, name=None, description=None, check=True)`** builds `G ∘ H`, in which
+  a central subgroup of `G` is identified with a central subgroup of `H`. The `identification` is a pair
+  `(g, h)` of central elements of the same order, or a dictionary that maps a central subgroup of `G`
+  isomorphically onto one of `H`. The elements are named `g:h`, after a representative of each coset.
+
+```python
+from finalg import generate_cyclic_group as z, generate_dihedral_group, identify_small_group
+from finalg.utilities import mult_action
+
+# Z7 x| Z3, in which the generator of Z3 acts on Z7 by x -> 2x (mod 7): the Frobenius group of order 21
+F21 = z(7).semidirect_product(z(3), mult_action(7, 2), name='F21')
+print(F21.order, F21.is_commutative())            # ==> 21 False
+print(identify_small_group(F21).name)             # ==> F21
+
+# The Pauli group is the central product Z4 o D4, in which the element of order 2 in Z4 is identified
+# with the central element of order 2 in D4
+D4, _, _ = generate_dihedral_group(4)
+pauli = z(4).central_product(D4, ('2', 'r^2'))
+print(pauli.order, identify_small_group(pauli).name)    # ==> 16 Pauli
+```
+
+### Automorphisms
+
+`automorphisms()`, `inner_automorphisms()` and `automorphism_group()` are `Group` methods (and functions in
+`group_construction.py`, which take the group as their argument). An automorphism is a tuple `f`, where
+`f[i]` is the index, in `G.elements`, of the image of the element with index `i`. Since an automorphism is
+determined by its values on a generating set, only images of a small generating set are tried, and only
+elements with the same invariants (order, size of centralizer, ...) as the generator are considered. That
+is fast when the number of automorphisms is up to the tens of thousands (`GL(4,2)` has 20160), but not
+for a group like `Z_2^5`, which has almost 10 million.
+`automorphism_group(max_order=2000, return_maps=False)` returns `Aut(G)` as a `Group` whose elements are
+named `f0` (the identity), `f1`, ..., and whose operation is composition; with `return_maps=True` it also
+returns the list of tuples that the names stand for, so that `f<k>` is the `k`-th item.
+
+```python
+Z4 = z(4)
+print(Z4.automorphisms())                         # ==> [(0, 1, 2, 3), (0, 3, 2, 1)]
+aut = Z4.automorphism_group()
+print(aut.name, aut.order, aut.elements)          # ==> Aut(Z4) 2 ('f0', 'f1')
+print(len(D4.inner_automorphisms()), len(D4.automorphisms()))    # ==> 4 8
+```
+
+> Note: a `Ring` is a `Group` under addition, so these methods apply to its *additive* group. For a `Ring`
+> or `Field` they do not give ring automorphisms.
+
+### Cyclic extensions
+
+Every solvable group `G` has a normal subgroup `N` of prime index `p`. If `t` is any element of `G` outside
+`N`, then conjugation by `t` is an automorphism `α` of `N`, and `c = t^p` lies in `N`, with `α(c) = c` and
+`α^p` equal to conjugation by `c`. Conversely, every such pair `(α, c)` defines a group of order `p·|N|`,
+whose elements are `x t^i` (`x` in `N`, `0 <= i < p`), with the product
+
+    (x t^i)(y t^j) = x α^i(y) t^(i+j),    where t^p = c.
+
+If `c` is the identity, the result is the semidirect product of `N` by `Z_p`; otherwise, it is a non-split
+extension (e.g., `Z_8`, `Q8` and the dicyclic groups). The same holds with any `m >= 2` in place of `p`,
+and then `G/N` is cyclic of order `m`.
+
+**`N.cyclic_extensions(m, return_data=False)`** returns all of the groups, up to isomorphism, that contain
+`N` as a normal subgroup with a cyclic quotient of order `m`. The elements are named `x:i`, which stands for
+`x t^i`. With `return_data=True`, it returns triples `(G, alpha, c)` instead, where `alpha` is a tuple of
+indices and `c` is an index into `N.elements`. The steps are also available separately:
+`valid_extension_data(N, m)` finds the pairs `(α, c)`, `reduce_by_conjugacy` keeps one pair from each orbit
+of `Aut(N)` (they give isomorphic groups), and `build_cyclic_extension(N, m, alpha, c)` builds one group.
+
+```python
+for G, alpha, c in Z4.cyclic_extensions(2, return_data=True):
+    print(identify_small_group(G).name, alpha, c)
+# ==> Z4_x_Z2 (0, 1, 2, 3) 0      the extension splits
+# ==> Z8 (0, 1, 2, 3) 1           t^2 generates Z4
+# ==> D4 (0, 3, 2, 1) 0           t inverts Z4, and the extension splits
+# ==> Q8 (0, 3, 2, 1) 2           t inverts Z4, and t^2 is the element of order 2
+
+print([identify_small_group(G).name for G in z(5).cyclic_extensions(4)])    # ==> ['Z20', 'F20', 'Dic5']
+```
+
+### All groups of a given order
+
+**`groups_of_order(n, cache=None)`** returns a list of all of the *solvable* groups of order `n`, up to
+isomorphism. It builds them recursively, as the cyclic extensions by `Z_p` of all of the groups of order
+`n/p`, for each prime `p` that divides `n`. Every group of order less than 60 is solvable, so, up to order
+59, this is all of the groups of that order. The smallest group that is not solvable is `A5`, of order 60,
+and a warning is issued for `n >= 60`, since such groups are not found. The groups of each order are
+remembered between calls (or in the dictionary given as `cache`).
+
+The groups come back with elements named `'0'`, ..., `'n-1'` (the identity is `'0'`; see also
+`relabel_group(G, name=None)`) and names `G<n>_1`, `G<n>_2`, ..., in no particular order. To find out
+which familiar group each one is, use `identify_small_group`.
+
+```python
+from finalg import groups_of_order
+
+groups = groups_of_order(12)
+print(len(groups), sorted(identify_small_group(g).name for g in groups))
+# ==> 5 ['A4', 'D6', 'Dic3', 'Z12', 'Z6_x_Z2']
+print(len(groups_of_order(16)))                   # ==> 14
+```
+
+The results agree with the [catalogue of small groups](#the-catalogue-of-small-groups) for every order from
+1 through 40, including the three groups of order 32 that none of the other constructions reach. See
+`notebooks/dev_and_test/groups_from_cyclic_extensions.ipynb` for the derivation and for timings.
+
+## The Catalogue of Small Groups
+
+`small_algebras.py` is a catalogue of **all 181 groups of order 1 through 40, one for each isomorphism
+class**. The groups are stored explicitly, as pretty-printed JSON files (see
+[Serialization](#serialization)), in the package data `finalg/data/small_groups` (`index.json`, the catalogue,
+and a `json/` folder with one file per group, such as `G08_04_Q8.json`). They are located with
+`importlib.resources`, so the catalogue works from a source checkout, an editable install, and an installed
+wheel alike. All but three of the groups were made with finalg code (generators, products, ...), which is
+shown, group by group, in the notebooks in `notebooks/small_groups`; the other three, of order 32
+(`SG32_8`, `SG32_15` and `SG32_32`), are neither products nor dihedral or dicyclic, and were converted from
+GAP (see `tools/gap_to_finalg.g`).
+
+**Names and ids.** Each group has a *SmallGroup id* `(order, index)`, which follows GAP's SmallGroup
+library (so `(8, 4)` is the quaternion group), and a *name*. The names follow the conventions of the
+generators: `Z6` is cyclic, `D4` is the dihedral group of order 8, `Q8` and `Q16` are quaternion groups,
+`Dic3` is the dicyclic group of order 12, `Z4_x_Z2` is a direct product, `S4` and `A4` are symmetric and
+alternating, and a few have names of their own, such as `Pauli` and `F21`. A group can be loaded by name,
+by id, by a file stem such as `'G08_04'`, or by the path of its JSON file.
+
+| Function | Returns |
+|---|---|
+| `small_groups(order=None)` | A dictionary of all of the small groups, keyed by order, or, if `order` is given, the list of the groups of that order, in the order of GAP's library (so the group at position `i` has the id `(order, i + 1)`). The groups are created once and shared. |
+| `identify_small_group(alg)` | The small group that `alg` is isomorphic to, or `None`, if `alg` is not a `Group` or has order greater than 40. It uses `fast_isomorphic`. |
+| `load_group(key)` | One group, read from its file by name, id, file stem, or path. Each call returns a new object. |
+| `load_groups(orders=None, keys=None, names=None, as_dict=False)` | Many groups (all of them by default), as a list or, with `as_dict=True`, as a dictionary keyed by id. |
+| `groups_index()` | The catalogue, `index.json`, as a list of dictionaries with the keys `order`, `gap_id`, `name`, `file`, `structure`, `abelian` and `source`. |
+| `data_dir()`, `verify_library()` | The folder that holds the data, and a check of all of the data (every file is a `Group` of the stated order and name, and the number of groups of each order is the known one, OEIS A000001). |
+
+`small_groups` and `identify_small_group` are available directly from `finalg`; the rest are in
+`finalg.small_algebras`.
+
+```python
+from finalg import small_groups, identify_small_group, generate_symmetric_group
+from finalg.small_algebras import load_group, load_groups, groups_index, verify_library
+
+print([g.name for g in small_groups(8)])          # ==> ['Z8', 'Z4_x_Z2', 'D4', 'Q8', 'Z2_x_Z2_x_Z2']
+print(len(small_groups()), sum(len(v) for v in small_groups().values()))    # ==> 40 181
+
+print(identify_small_group(generate_symmetric_group(3)).name)    # ==> D3
+print(identify_small_group(generate_symmetric_group(5)))         # ==> None  (order 120 is too big)
+
+q8 = load_group((8, 4))                           # by id; 'Q8' and 'G08_04' work too
+print(q8.name, q8.order)                          # ==> Q8 8
+print([g.name for g in load_groups(names=['Q8', 'Pauli', 'F21'])])    # ==> ['Q8', 'Pauli', 'F21']
+
+print(groups_index()[10])
+# ==> {'order': 8, 'gap_id': 2, 'name': 'Z4_x_Z2', 'file': 'G08_02_Z4_x_Z2.json',
+#      'structure': 'C4 x C2', 'abelian': True, 'source': 'finalg'}
+
+verify_library()                                  # ==> OK: 181 groups of orders 1 through 40.
+```
+
+A loaded group is an ordinary finalg `Group`, so everything else in the package works on it. In particular,
+`about_subalgebras` uses `identify_small_group` to name the subgroups that it finds, as in the example under
+[Supporting Modules](#supporting-modules). The catalogue complements `groups_of_order`, described in
+[Constructing Groups from Smaller Groups](#constructing-groups-from-smaller-groups): the catalogue has the
+groups ready-made and named, with GAP's ids, whereas `groups_of_order` computes the solvable groups of
+any order (it is not limited to 40).
+
+The notebook `notebooks/small_groups/README.ipynb` describes the data in more detail, including how it was
+checked against GAP, and how the groups were built.
 
 ## Supporting Modules
 
@@ -513,8 +889,9 @@ print(Z6.order, S3.order, D6.order)   # ==> 6 6 6
   subalgebras: `partition_into_isomorphic_lists` groups a list of subalgebras (e.g., subgroups)
   into sublists of mutually isomorphic algebras; `about_subalgebras(alg)` computes an algebra's
   proper subalgebras, partitions them by isomorphism, and prints a readable summary, which, for
-  subgroups of order 40 or less, also names the small group (see `small_algebras.py`) that each
-  set of isomorphic subgroups is isomorphic to (use `identify_small=False` to leave that out);
+  subgroups of order 40 or less, also names the small group (see
+  [The Catalogue of Small Groups](#the-catalogue-of-small-groups)) that each set of isomorphic
+  subgroups is isomorphic to (use `identify_small=False` to leave that out);
   `find_isomorphic_subalgebra` looks up whether a given algebra matches one of the partitions
   found for another algebra.
 
@@ -529,19 +906,26 @@ print(Z6.order, S3.order, D6.order)   # ==> 6 6 6
   #         Group: ...
   ```
 
-- **`small_algebras.py`.** A catalogue of all 181 groups of order 1 through 40, one per isomorphism
-  class, loaded (once, on first use) from the pretty-printed JSON files in the package data
-  `finalg/data/small_groups` (see the notebooks in `notebooks/small_groups` for how each group is built).
-  `small_groups()` returns a dictionary keyed by order, `small_groups(16)` returns the list of the 14
-  groups of order 16, listed in the order of GAP's SmallGroup library, and `identify_small_group(alg)`
-  returns the small group that a given group is isomorphic to (or `None`). `load_group` and
-  `load_groups` load single groups or many groups by name or by SmallGroup id, e.g. `load_group((8, 4))`.
+- **`sympy_interop.py`.** Converters between finalg and `sympy.combinatorics`.
+  `from_sympy_permutation_group(sympy_group, name=None, description=None, verify=False)` turns any
+  SymPy `PermutationGroup` (the named constructors, groups built from a few generators, derived and
+  Sylow subgroups, stabilizers, direct products, ...) into a finalg `Group`, and returns it together
+  with a dictionary that maps the element names to the permutations. SymPy enumerates the elements, and the
+  associativity check is skipped (it is redundant for a permutation group), so a group like `S6`, of
+  order 720, is converted in a fraction of a second. `to_sympy_permutation_group(group)` goes the other
+  way, by way of the regular representation (Cayley's theorem), and returns the `PermutationGroup` and a
+  dictionary of the permutation for every element. It works for a `Group`, but not for a `Ring` or a
+  `Field`, or for algebras without associativity or inverses.
 
   ```python
-  from finalg import small_groups, identify_small_group, generate_symmetric_group
+  from sympy.combinatorics.named_groups import SymmetricGroup
+  from finalg import from_sympy_permutation_group, to_sympy_permutation_group, small_groups
 
-  [g.name for g in small_groups(8)]                    # ==> ['Z8', 'Z4_x_Z2', 'D4', 'Q8', 'Z2_x_Z2_x_Z2']
-  identify_small_group(generate_symmetric_group(3))    # ==> the small group named 'D3'
+  S4, perms = from_sympy_permutation_group(SymmetricGroup(4))
+  print(S4.order, type(S4).__name__)       # ==> 24 Group
+
+  sympy_q8, perms = to_sympy_permutation_group(small_groups(8)[3])   # Q8
+  print(sympy_q8.order())                  # ==> 8
   ```
 
 - **`examples.py` — `Examples`.** Loads the built-in example algebras shipped as JSON under
@@ -572,8 +956,11 @@ print(Z6.order, S3.order, D6.order)   # ==> 6 6 6
 - **`utilities.py`.** General helpers used across the package: `np_arr_to_tuple` (also usable as
   the `make_immutable` argument to `generate_algebra_from_element_dict`), `get_duplicates`,
   `all_strings`, `powerset`, `compress_runs`, `cayley_graph_to_json` (NetworkX node-link
-  serialization of a Cayley graph), and `make_table_from_xml` (a helper for converting tables
-  copied from the "Groupprops" wiki into `finalg`'s list-of-lists format).
+  serialization of a Cayley graph), `make_table_from_xml` (a helper for converting tables
+  copied from the "Groupprops" wiki into `finalg`'s list-of-lists format), and the helpers for building
+  groups and writing them out: `mult_action` and `action_from_generators` (actions for
+  `Group.semidirect_product`), and `pretty_json` and `dump_pretty` (an algebra as JSON with one
+  Cayley-table row per line).
 
   ```python
   from finalg.utilities import compress_runs
@@ -585,6 +972,7 @@ print(Z6.order, S3.order, D6.order)   # ==> 6 6 6
 
 ```
 src/finalg/
+├── __init__.py                     # the public API (__all__)
 ├── finite_algebra_ABC.py           # FiniteAlgebra (ABC)
 ├── finite_composite_algebra_ABC.py # FiniteCompositeAlgebra (ABC)
 ├── magma.py                        # Magma
@@ -602,14 +990,22 @@ src/finalg/
 ├── infix_notation.py               # InfixNotation
 ├── make_finite_algebra.py          # make_finite_algebra (the factory function)
 ├── algebra_generators.py           # generate_* functions
+├── group_construction.py           # automorphisms, cyclic extensions, groups_of_order
+├── small_algebras.py               # catalogue of all groups of order 1-40
 ├── about_subalgebras.py            # subalgebra/isomorphism summary tools
 ├── abstract_matrix.py              # AbstractMatrix
 ├── permutation.py                  # Perm
+├── sympy_interop.py                # to/from SymPy permutation groups
 ├── examples.py                     # Examples (built-in example algebras)
 ├── my_math.py                      # number-theory helpers
 ├── utilities.py                    # general helpers
-└── data/algebras/                  # JSON-serialized example algebras
+├── data/algebras/                  # JSON-serialized example algebras
+└── data/small_groups/              # index.json, and json/: the 181 groups of order 1-40
 tests/                              # pytest test suite
+notebooks/                          # small_groups/ (how each small group is built),
+                                    #   notebooks_for_docs/ (sources of the docs pages),
+                                    #   dev_and_test/ (development notebooks)
+tools/                              # gap_to_finalg.g (converts a GAP group to finalg JSON)
 docs/                                # Sphinx documentation (finalg.readthedocs.io)
 ```
 

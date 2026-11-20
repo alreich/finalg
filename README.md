@@ -11,7 +11,7 @@ of abstract algebra:
 * inspecting their properties (associativity, commutativity, identities, inverses, generators, subalgebras, ...),
 * combining them (direct, semidirect and central products, quotient groups, cyclic extensions,
   Cayley–Dickson construction),
-* looking up any group of order 1 to 40 in a built-in catalogue, and
+* looking up any group of order 1 to 40 in a built-in catalog, and
 * representing them in other forms (regular representations, abstract matrices, Cayley diagrams).
 
 - Source: <https://github.com/alreich/finalg>
@@ -32,7 +32,7 @@ of abstract algebra:
 - [Modules and Vector Spaces](#modules-and-vector-spaces)
 - [Automatically Generating Algebras](#automatically-generating-algebras)
 - [Constructing Groups from Smaller Groups](#constructing-groups-from-smaller-groups)
-- [The Catalogue of Small Groups](#the-catalogue-of-small-groups)
+- [The Catalog of Small Groups](#the-catalog-of-small-groups)
 - [Supporting Modules](#supporting-modules)
 - [Repository Layout](#repository-layout)
 - [References](#references)
@@ -361,7 +361,7 @@ currently have a serialized form.
 `dump` writes the whole dictionary on a single line. For anything bigger than a very small algebra,
 `finalg.utilities.dump_pretty(alg, path)` is easier to read: it writes the same dictionary with one
 Cayley-table row per line (this is the layout of the files in the
-[catalogue of small groups](#the-catalogue-of-small-groups)).
+[catalog of small groups](#the-catalog-of-small-groups)).
 
 `Module`/`VectorSpace` objects instead have an in-memory representation of five components:
 `name`, `description`, a `Ring`/`Field` of scalars, a `Group` of vectors, and a scalar-vector
@@ -662,7 +662,7 @@ print(Q8.name, Q8.order, list(elem_dict)[:4])             # ==> Q8 8 ['e', 'a', 
 The generators build one named family at a time. To build groups *out of other groups* (direct,
 semidirect and central products, and extensions), see
 [Constructing Groups from Smaller Groups](#constructing-groups-from-smaller-groups); to retrieve any
-group of order 40 or less by name, see [The Catalogue of Small Groups](#the-catalogue-of-small-groups);
+group of order 40 or less by name, see [The Catalog of Small Groups](#the-catalog-of-small-groups);
 and to import a group from SymPy, see `sympy_interop.py` under [Supporting Modules](#supporting-modules).
 
 ## Constructing Groups from Smaller Groups
@@ -787,17 +787,17 @@ print(len(groups), sorted(identify_small_group(g).name for g in groups))
 print(len(groups_of_order(16)))                   # ==> 14
 ```
 
-The results agree with the [catalogue of small groups](#the-catalogue-of-small-groups) for every order from
+The results agree with the [catalog of small groups](#the-catalog-of-small-groups) for every order from
 1 through 40, including the three groups of order 32 that none of the other constructions reach. See
 `notebooks/dev_and_test/groups_from_cyclic_extensions.ipynb` for the derivation and for timings.
 
-## The Catalogue of Small Groups
+## The Catalog of Small Groups
 
-`group_catalog.py` is a catalogue of **all 181 groups of order 1 through 40, one for each isomorphism
+`group_catalog.py` is a catalog of **all 181 groups of order 1 through 40, one for each isomorphism
 class**. The groups are stored explicitly, as pretty-printed JSON files (see
-[Serialization](#serialization)), in the package data `finalg/data/small_groups` (`index.json`, the catalogue,
+[Serialization](#serialization)), in the package data `finalg/data/small_groups` (`index.json`, the catalog,
 and a `json/` folder with one file per group, such as `G08_04_Q8.json`). They are located with
-`importlib.resources`, so the catalogue works from a source checkout, an editable install, and an installed
+`importlib.resources`, so the catalog works from a source checkout, an editable install, and an installed
 wheel alike. All but three of the groups were made with finalg code (generators, products, ...), which is
 shown, group by group, in the notebooks in `notebooks/small_groups`; the other three, of order 32
 (`SG32_8`, `SG32_15` and `SG32_32`), are neither products nor dihedral or dicyclic, and were converted from
@@ -816,7 +816,7 @@ by id, by a file stem such as `'G08_04'`, or by the path of its JSON file.
 | `identify_small_group(alg)` | The small group that `alg` is isomorphic to, or `None`, if `alg` is not a `Group` or has order greater than 40. It uses `fast_isomorphic`. |
 | `load_group(key)` | One group, read from its file by name, id, file stem, or path. Each call returns a new object. |
 | `load_groups(orders=None, keys=None, names=None, as_dict=False)` | Many groups (all of them by default), as a list or, with `as_dict=True`, as a dictionary keyed by id. |
-| `groups_index()` | The catalogue, `index.json`, as a list of dictionaries with the keys `order`, `gap_id`, `name`, `file`, `structure`, `abelian` and `source`. |
+| `groups_index()` | The catalog, `index.json`, as a list of dictionaries with the keys `order`, `gap_id`, `name`, `file`, `structure`, `abelian` and `source`. |
 | `data_dir()`, `verify_library()` | The folder that holds the data, and a check of all of the data (every file is a `Group` of the stated order and name, and the number of groups of each order is the known one, OEIS A000001). |
 
 `small_groups` and `identify_small_group` are available directly from `finalg`; the rest are in
@@ -845,8 +845,8 @@ verify_library()                                  # ==> OK: 181 groups of orders
 
 A loaded group is an ordinary finalg `Group`, so everything else in the package works on it. In particular,
 `about_subalgebras` uses `identify_small_group` to name the subgroups that it finds, as in the example under
-[Supporting Modules](#supporting-modules). The catalogue complements `groups_of_order`, described in
-[Constructing Groups from Smaller Groups](#constructing-groups-from-smaller-groups): the catalogue has the
+[Supporting Modules](#supporting-modules). The catalog complements `groups_of_order`, described in
+[Constructing Groups from Smaller Groups](#constructing-groups-from-smaller-groups): the catalog has the
 groups ready-made and named, with GAP's ids, whereas `groups_of_order` computes the solvable groups of
 any order (it is not limited to 40).
 
@@ -890,7 +890,7 @@ checked against GAP, and how the groups were built.
   into sublists of mutually isomorphic algebras; `about_subalgebras(alg)` computes an algebra's
   proper subalgebras, partitions them by isomorphism, and prints a readable summary, which, for
   subgroups of order 40 or less, also names the small group (see
-  [The Catalogue of Small Groups](#the-catalogue-of-small-groups)) that each set of isomorphic
+  [The Catalog of Small Groups](#the-catalog-of-small-groups)) that each set of isomorphic
   subgroups is isomorphic to (use `identify_small=False` to leave that out);
   `find_isomorphic_subalgebra` looks up whether a given algebra matches one of the partitions
   found for another algebra.
@@ -991,7 +991,7 @@ src/finalg/
 ├── make_finite_algebra.py          # make_finite_algebra (the factory function)
 ├── algebra_generators.py           # generate_* functions
 ├── group_construction.py           # automorphisms, cyclic extensions, groups_of_order
-├── group_catalog.py               # catalogue of all groups of order 1-40
+├── group_catalog.py               # catalog of all groups of order 1-40
 ├── about_subalgebras.py            # subalgebra/isomorphism summary tools
 ├── abstract_matrix.py              # AbstractMatrix
 ├── permutation.py                  # Perm

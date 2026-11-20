@@ -1,5 +1,5 @@
 """
-Unit tests for finalg.group_catalog: the catalogue of all groups of order 1 through 40, which is
+Unit tests for finalg.group_catalog: the catalog of all groups of order 1 through 40, which is
 loaded from the JSON files in the package finalg.data.small_groups. (The loading functions and the
 data files themselves are tested in test_small_groups_loader.py.)
 """
@@ -30,9 +30,9 @@ class TestSmallGroups(TestCase):
         self.assertEqual(sorted(small_groups()), list(range(1, 41)))
 
     def test_number_of_groups_of_each_order(self):
-        catalogue = small_groups()
-        self.assertEqual([len(catalogue[n]) for n in range(1, 41)], GROUP_COUNTS)
-        self.assertEqual(sum(len(v) for v in catalogue.values()), 181)
+        catalog = small_groups()
+        self.assertEqual([len(catalog[n]) for n in range(1, 41)], GROUP_COUNTS)
+        self.assertEqual(sum(len(v) for v in catalog.values()), 181)
 
     def test_every_algebra_is_a_group_of_the_right_order(self):
         for n, grps in small_groups().items():
@@ -41,8 +41,8 @@ class TestSmallGroups(TestCase):
                 self.assertEqual(g.order, n)
 
     def test_number_of_abelian_groups_of_each_order(self):
-        catalogue = small_groups()
-        self.assertEqual([sum(g.is_commutative() for g in catalogue[n]) for n in range(1, 41)],
+        catalog = small_groups()
+        self.assertEqual([sum(g.is_commutative() for g in catalog[n]) for n in range(1, 41)],
                          ABELIAN_COUNTS)
 
     def test_no_two_groups_of_the_same_order_are_isomorphic(self):
@@ -85,7 +85,7 @@ class TestSmallGroups(TestCase):
         self.assertEqual([g.name for g in small_groups(32) if g.name.startswith('SG32_')],
                          ['SG32_8', 'SG32_15', 'SG32_32'])
 
-    def test_standard_groups_are_in_the_catalogue(self):
+    def test_standard_groups_are_in_the_catalog(self):
         standard = [generate_symmetric_group(3), generate_dihedral_group(4)[0], generate_dicyclic_group(2)[0],
                     generate_alternating_group(4), generate_dicyclic_group(3)[0], generate_dihedral_group(8)[0],
                     generate_dihedral_group(10)[0], generate_dicyclic_group(5)[0],
@@ -101,10 +101,10 @@ class TestSmallGroups(TestCase):
         self.assertIs(small_groups()[16][5], small_groups(16)[5])
         self.assertIs(small_groups(32)[19], small_groups()[32][19])
 
-    def test_changing_a_returned_container_does_not_change_the_catalogue(self):
-        catalogue = small_groups()
-        catalogue[4].clear()
-        catalogue.pop(5)
+    def test_changing_a_returned_container_does_not_change_the_catalog(self):
+        catalog = small_groups()
+        catalog[4].clear()
+        catalog.pop(5)
         small_groups(6).append('junk')
         self.assertEqual(len(small_groups(4)), 2)
         self.assertIn(5, small_groups())

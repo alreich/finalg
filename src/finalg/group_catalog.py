@@ -1,9 +1,9 @@
 # ===============================================
-#   Group catalog: a catalogue of small groups
+#   Group catalog: a catalog of small groups
 # ===============================================
-"""A catalogue of all groups of order 1 through 40, one for each isomorphism class (181 groups in all).
+"""A catalog of all groups of order 1 through 40, one for each isomorphism class (181 groups in all).
 
-The groups are stored explicitly, as pretty-printed JSON files (one per group, plus a catalogue,
+The groups are stored explicitly, as pretty-printed JSON files (one per group, plus a catalog,
 ``index.json``), in the package ``finalg.data.small_groups``. They are located with
 ``importlib.resources``, so this works for a source checkout, an editable install, and an installed
 wheel alike. How each group can be built from simpler ones is shown, with finalg code, in the notebooks
@@ -17,7 +17,7 @@ The functions are:
 * ``identify_small_group(alg)`` returns the small group that a given group is isomorphic to, or None.
 * ``load_group(key)`` loads one group from its JSON file, by name, by SmallGroup id, or by file path, and
   ``load_groups(...)`` loads many of them (all of them by default), as a list or a dictionary.
-* ``groups_index()`` returns the catalogue, ``index.json``, as a list of dictionaries, ``data_dir()``
+* ``groups_index()`` returns the catalog, ``index.json``, as a list of dictionaries, ``data_dir()``
   returns the folder that holds the data, and ``verify_library()`` checks all of it.
 
 Group identifiers follow GAP's SmallGroup library: ``(order, index)``, e.g. ``(8, 4)`` is the
@@ -80,7 +80,7 @@ def _load_file(directory, filename):
 
 
 def groups_index(directory=None):
-    """Return the catalogue of the library as a list of dictionaries, one per group, in order of
+    """Return the catalog of the library as a list of dictionaries, one per group, in order of
     (order, SmallGroup index). Keys: order, gap_id, name, file, structure, abelian, source."""
     if directory:      # a user-supplied folder may change between calls, so it is never cached
         return [dict(r) for r in _read_json(directory, 'index.json')]
@@ -177,11 +177,11 @@ def verify_library(directory=None, verbose=True):
 
 
 # ----------------------------------------------------------------------------------------
-#  The catalogue of small groups
+#  The catalog of small groups
 # ----------------------------------------------------------------------------------------
 
 @lru_cache(maxsize=None)
-def _catalogue():
+def _catalog():
     """Load, once, the dictionary that maps each order from 1 to 40 to the list of all groups of
     that order, up to isomorphism, in the order of GAP's SmallGroup library."""
     groups = {n: [] for n in range(1, MAX_SMALL_ORDER + 1)}
@@ -189,7 +189,7 @@ def _catalogue():
         groups[r['order']].append(_load_file(None, r['file']))
     for n, grps in groups.items():
         if len(grps) != _GROUP_COUNTS[n - 1] or any(g.order != n for g in grps):
-            raise RuntimeError(f"The catalogue of small groups of order {n} is wrong: "
+            raise RuntimeError(f"The catalog of small groups of order {n} is wrong: "
                                f"{len(grps)} groups, but there should be {_GROUP_COUNTS[n - 1]}.")
     return groups
 
@@ -205,14 +205,14 @@ def small_groups(order=None):
 
     The Group objects are created once and then shared, so a group returned by one call is the very
     same object returned by another. The dictionary and lists are new each time, so changing them does
-    not change the catalogue."""
-    catalogue = _catalogue()
+    not change the catalog."""
+    catalog = _catalog()
     if order is None:
-        return {n: list(grps) for n, grps in catalogue.items()}
+        return {n: list(grps) for n, grps in catalog.items()}
     if isinstance(order, bool) or not isinstance(order, int) or not 1 <= order <= MAX_SMALL_ORDER:
         raise ValueError(f"order = {order!r} is invalid; it must be an integer from 1 to {MAX_SMALL_ORDER}, "
                          f"or None for all of the small groups.")
-    return list(catalogue[order])
+    return list(catalog[order])
 
 
 def identify_small_group(alg):
@@ -225,7 +225,7 @@ def identify_small_group(alg):
     that it has to try."""
     if not isinstance(alg, Group) or alg.order > MAX_SMALL_ORDER:
         return None
-    candidates = _catalogue()[alg.order]
+    candidates = _catalog()[alg.order]
     for small in candidates:
         if alg is small:
             return small

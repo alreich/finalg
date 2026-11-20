@@ -241,7 +241,7 @@ class TestSmallGroupNamesInSummary(TestCase):
         self.assertNotIn('small group', buf.getvalue())
 
     def test_subgroups_of_order_greater_than_40_get_no_note(self):
-        # The proper subgroups of Z82 have orders 2 and 41, so order 41 is too big for the catalogue of
+        # The proper subgroups of Z82 have orders 2 and 41, so order 41 is too big for the catalog of
         # small groups, but order 2 is not.
         out = summary(generate_cyclic_group(82))
         self.assertIn('of order 41', out)

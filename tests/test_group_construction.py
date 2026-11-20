@@ -19,12 +19,12 @@ GROUP_COUNTS = (1, 1, 1, 2, 1, 2, 1, 5, 2, 2, 1, 5, 1, 2, 1, 14, 1, 5, 1, 5,
 
 
 def small(order, name):
-    """A group from the catalogue of small groups, by name."""
+    """A group from the catalog of small groups, by name."""
     return next(g for g in small_groups(order) if g.name == name)
 
 
-def catalogue_name(group):
-    """The name of the catalogue group that the given group is isomorphic to, found with fast_isomorphic."""
+def catalog_name(group):
+    """The name of the catalog group that the given group is isomorphic to, found with fast_isomorphic."""
     matches = [s.name for s in small_groups(group.order) if group.fast_isomorphic(s)]
     assert len(matches) == 1, f"{group.name} matches {matches}"
     return matches[0]
@@ -64,10 +64,10 @@ class TestAutomorphisms(TestCase):
         self.assertIsInstance(aut, Group)
         self.assertEqual(aut.order, 4)
         self.assertTrue(aut.is_commutative())
-        self.assertEqual(catalogue_name(aut), "V4")      # (Z/8)* is Z2 x Z2
+        self.assertEqual(catalog_name(aut), "V4")      # (Z/8)* is Z2 x Z2
 
     def test_automorphism_group_of_q8_is_s4(self):
-        self.assertEqual(catalogue_name(automorphism_group(small(8, "Q8"))), "S4")
+        self.assertEqual(catalog_name(automorphism_group(small(8, "Q8"))), "S4")
 
     def test_automorphism_group_names_and_maps(self):
         group = small(6, "D3")
@@ -90,12 +90,12 @@ class TestCyclicExtensions(TestCase):
 
     def test_extensions_of_z4_by_z2(self):
         z4 = small(4, "Z4")
-        names = sorted(catalogue_name(g) for g in cyclic_extensions(z4, 2))
+        names = sorted(catalog_name(g) for g in cyclic_extensions(z4, 2))
         self.assertEqual(names, sorted(["Z8", "Z4_x_Z2", "D4", "Q8"]))
 
     def test_extension_data_for_nonsplit_cases(self):
         z4 = small(4, "Z4")
-        by_name = {catalogue_name(g): (alpha, c) for g, alpha, c in cyclic_extensions(z4, 2, return_data=True)}
+        by_name = {catalog_name(g): (alpha, c) for g, alpha, c in cyclic_extensions(z4, 2, return_data=True)}
         identity_index = list(z4.elements).index(z4.identity)
         self.assertEqual(by_name["Z4_x_Z2"][1], identity_index)    # direct product: split, c = e
         self.assertEqual(by_name["D4"][1], identity_index)         # semidirect product: split, c = e
@@ -104,12 +104,12 @@ class TestCyclicExtensions(TestCase):
 
     def test_other_extensions(self):
         v4, z3, z5 = small(4, "V4"), small(3, "Z3"), small(5, "Z5")
-        self.assertEqual(sorted(catalogue_name(g) for g in cyclic_extensions(v4, 2)),
+        self.assertEqual(sorted(catalog_name(g) for g in cyclic_extensions(v4, 2)),
                          sorted(["Z2_x_Z2_x_Z2", "Z4_x_Z2", "D4"]))
-        self.assertEqual(sorted(catalogue_name(g) for g in cyclic_extensions(z3, 2)), sorted(["Z6", "D3"]))
+        self.assertEqual(sorted(catalog_name(g) for g in cyclic_extensions(z3, 2)), sorted(["Z6", "D3"]))
         # m need not be prime
-        self.assertEqual(sorted(catalogue_name(g) for g in cyclic_extensions(z3, 4)), sorted(["Z12", "Dic3"]))
-        self.assertEqual(sorted(catalogue_name(g) for g in cyclic_extensions(z5, 4)),
+        self.assertEqual(sorted(catalog_name(g) for g in cyclic_extensions(z3, 4)), sorted(["Z12", "Dic3"]))
+        self.assertEqual(sorted(catalog_name(g) for g in cyclic_extensions(z5, 4)),
                          sorted(["Z20", "F20", "Dic5"]))
 
     def test_extension_of_trivial_group_is_cyclic(self):
@@ -176,10 +176,10 @@ class TestGroupsOfOrder(TestCase):
             with self.subTest(n=n):
                 self.assertEqual(len(groups_of_order(n)), count)
 
-    def test_groups_match_the_catalogue_of_small_groups(self):
+    def test_groups_match_the_catalog_of_small_groups(self):
         for n in range(1, 25):
             with self.subTest(n=n):
-                names = [catalogue_name(g) for g in groups_of_order(n)]
+                names = [catalog_name(g) for g in groups_of_order(n)]
                 self.assertEqual(len(set(names)), len(names))
                 self.assertEqual(set(names), {g.name for g in small_groups(n)})
 

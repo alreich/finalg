@@ -412,7 +412,7 @@ class TestAutomorphismAndExtensionMethods(TestCase):
     """The Group methods that wrap finalg.group_construction."""
 
     def setUp(self):
-        from finalg.small_algebras import small_groups
+        from finalg.group_catalog import small_groups
         self.small = lambda order, name: next(g for g in small_groups(order) if g.name == name)
 
     def test_automorphisms_and_inner_automorphisms(self):

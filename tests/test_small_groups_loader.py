@@ -1,5 +1,5 @@
 """
-Unit tests for the loading functions of finalg.small_algebras, and for the serialized small groups
+Unit tests for the loading functions of finalg.group_catalog, and for the serialized small groups
 (all groups of order 1 through 40) that they read, which are stored as JSON files in the package
 finalg.data.small_groups.
 
@@ -16,7 +16,7 @@ from pathlib import Path
 from unittest import TestCase
 
 # If the loader is ever moved or renamed, this import is the only line in this file that has to change.
-import finalg.small_algebras as sgt
+import finalg.group_catalog as sgt
 
 from finalg import (generate_cyclic_group, generate_dihedral_group,
                     generate_dicyclic_group, generate_symmetric_group, generate_alternating_group)

@@ -793,7 +793,7 @@ The results agree with the [catalogue of small groups](#the-catalogue-of-small-g
 
 ## The Catalogue of Small Groups
 
-`small_algebras.py` is a catalogue of **all 181 groups of order 1 through 40, one for each isomorphism
+`group_catalog.py` is a catalogue of **all 181 groups of order 1 through 40, one for each isomorphism
 class**. The groups are stored explicitly, as pretty-printed JSON files (see
 [Serialization](#serialization)), in the package data `finalg/data/small_groups` (`index.json`, the catalogue,
 and a `json/` folder with one file per group, such as `G08_04_Q8.json`). They are located with
@@ -820,11 +820,11 @@ by id, by a file stem such as `'G08_04'`, or by the path of its JSON file.
 | `data_dir()`, `verify_library()` | The folder that holds the data, and a check of all of the data (every file is a `Group` of the stated order and name, and the number of groups of each order is the known one, OEIS A000001). |
 
 `small_groups` and `identify_small_group` are available directly from `finalg`; the rest are in
-`finalg.small_algebras`.
+`finalg.group_catalog`.
 
 ```python
 from finalg import small_groups, identify_small_group, generate_symmetric_group
-from finalg.small_algebras import load_group, load_groups, groups_index, verify_library
+from finalg.group_catalog import load_group, load_groups, groups_index, verify_library
 
 print([g.name for g in small_groups(8)])          # ==> ['Z8', 'Z4_x_Z2', 'D4', 'Q8', 'Z2_x_Z2_x_Z2']
 print(len(small_groups()), sum(len(v) for v in small_groups().values()))    # ==> 40 181
@@ -991,7 +991,7 @@ src/finalg/
 ├── make_finite_algebra.py          # make_finite_algebra (the factory function)
 ├── algebra_generators.py           # generate_* functions
 ├── group_construction.py           # automorphisms, cyclic extensions, groups_of_order
-├── small_algebras.py               # catalogue of all groups of order 1-40
+├── group_catalog.py               # catalogue of all groups of order 1-40
 ├── about_subalgebras.py            # subalgebra/isomorphism summary tools
 ├── abstract_matrix.py              # AbstractMatrix
 ├── permutation.py                  # Perm

@@ -9,7 +9,7 @@ from unittest import TestCase
 import numpy as np
 import networkx as nx
 
-import finalg.small_algebras as sgt
+import finalg.group_catalog as sgt
 from finalg import make_finite_algebra, generate_cyclic_group
 from finalg.group import Group
 

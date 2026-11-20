@@ -1,5 +1,5 @@
 # ===============================================
-#   Small algebras: a catalogue of small groups
+#   Group catalog: a catalogue of small groups
 # ===============================================
 """A catalogue of all groups of order 1 through 40, one for each isomorphism class (181 groups in all).
 

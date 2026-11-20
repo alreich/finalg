@@ -1,5 +1,5 @@
 """
-Unit tests for finalg.small_algebras: the catalogue of all groups of order 1 through 40, which is
+Unit tests for finalg.group_catalog: the catalogue of all groups of order 1 through 40, which is
 loaded from the JSON files in the package finalg.data.small_groups. (The loading functions and the
 data files themselves are tested in test_small_groups_loader.py.)
 """
@@ -7,7 +7,7 @@ data files themselves are tested in test_small_groups_loader.py.)
 import itertools as it
 from unittest import TestCase
 
-import finalg.small_algebras as sa
+import finalg.group_catalog as sa
 from finalg import (small_groups, identify_small_group, generate_cyclic_group, generate_symmetric_group,
                     generate_dihedral_group, generate_dicyclic_group, generate_alternating_group,
                     generate_algebra_mod_n)

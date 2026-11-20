@@ -11,7 +11,7 @@ from finalg.group import Group
 from finalg.group_construction import (automorphisms, inner_automorphisms, automorphism_group,
                                        valid_extension_data, reduce_by_conjugacy, build_cyclic_extension,
                                        cyclic_extensions, relabel_group, groups_of_order)
-from finalg.small_algebras import small_groups
+from finalg.group_catalog import small_groups
 
 # The number of groups of order 1, 2, ..., 31 (OEIS A000001)
 GROUP_COUNTS = (1, 1, 1, 2, 1, 2, 1, 5, 2, 2, 1, 5, 1, 2, 1, 14, 1, 5, 1, 5,
